@@ -1,35 +1,35 @@
 package config
+
 import (
-	"fmt"
 	"code.google.com/p/gcfg"
+	"fmt"
 )
 
 type Config struct {
-       Daemon
-       Syslog
-       Ssl
-       Sqlite
+	Daemon
+	Syslog
+	Ssl
+	Sqlite
 }
 
 type Daemon struct {
-        Interfaces, Realm, Backend string
-        Port int
+	Interfaces, Realm, Backend string
+	Port                       int
 }
 
 type Syslog struct {
-        Level string
+	Level string
 }
 
 type Ssl struct {
-        Enabled bool        
+	Enabled bool
 }
 
 type Sqlite struct {
-        Url string
+	Url string
 }
 
-
-func Read(filename string) (Config, error) {	
+func Read(filename string) (Config, error) {
 	var cfg Config
 	err := gcfg.ReadFileInto(&cfg, filename)
 	if err != nil {

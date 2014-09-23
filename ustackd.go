@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"strings"
 	"strconv"
+	"strings"
 
-	"github.com/UserStack/ustackd/config"
 	"github.com/UserStack/ustackd/backends"
+	"github.com/UserStack/ustackd/config"
 )
 
 // Client
