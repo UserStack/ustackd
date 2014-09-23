@@ -421,7 +421,7 @@ Return Codes:
 
     OK: Ok
 
-#### Groups of a user
+#### Users of a group
 
 *Capability:* (user group admin)
 
