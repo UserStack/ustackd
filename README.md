@@ -20,12 +20,10 @@ We may stole ideas from:
 This section describes the configuration of the ustackd.
 
     [Daemon]
-    # comma separated list of interfaces to listen on
-    interfaces = 0.0.0.0
-    
-    # default port for ustackd is 7654
-    port = 7654
-    
+    # Interface and port where the daemon should listen
+    listen = ::1:7654
+    ; listen = 127.0.0.1:7654
+
     # the realm send by the server after connect
     realm = ustackd $VERSION$
     
@@ -61,8 +59,8 @@ This section describes the configuration of the ustackd.
     # status
     enabled = 1
     
-    # Port where the daemon should listen with ssl/tls enabled
-    ; port = 8765
+    # Interface Port where the daemon should listen with ssl/tls enabled
+    ; listen = ::1:8765
     
     # location of the private key in pem format 
     ; key = /etc/ustack/key.pem

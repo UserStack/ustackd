@@ -12,7 +12,7 @@ func TestRead(t *testing.T) {
 	}
 
 	expected := Config{
-		Daemon{"0.0.0.0", "ustackd $VERSION$", "sqlite", 7654},
+		Daemon{"::1:7654", "ustackd $VERSION$", "sqlite"},
 		Syslog{"Debug"},
 		Ssl{true},
 		Sqlite{"ustack.db"},
