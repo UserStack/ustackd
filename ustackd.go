@@ -21,57 +21,82 @@ type Group struct {
 
 // Client
 
+type ConnectionContext struct {
+    conn net.Conn
+    reader *bufio.Reader
+    writer *bufio.Writer
+    loggedin bool
+    quitting bool
+}
+
+func (context *ConnectionContext) Write(line string) {
+    context.writer.WriteString(line + "\r\n")
+    context.writer.Flush()
+}
+
+func (context *ConnectionContext) Ok() {
+    context.Write("+ OK")
+}
+
+func (context *ConnectionContext) Err(code string) {
+    context.Write("- " + code)
+}
+
+func (context *ConnectionContext) Log(line string) {
+    fmt.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
+}
+
+func login(context *ConnectionContext, line string) {
+    passwd := line[6:]
+    context.Log("Try login with '" + passwd + "'")
+
+    if passwd == "secret" {
+        context.loggedin = true
+        context.Ok()
+    } else {
+        context.Err("EPERM")
+    }
+}
+
+func quit(context *ConnectionContext, line string) {
+    context.quitting = true
+    context.Write("+ BYE")
+}
+
+func interpret(context *ConnectionContext, line string) {
+    context.Log(line)
+    if strings.HasPrefix(line, "login") && len(line) >=6 {
+        login(context, line)
+    } else if line == "quit" {
+        quit(context, line)
+    } else {
+        context.Err("EFAULT")
+    }
+}
+
 func ConnectionHandler(conn net.Conn) {
+    realm := "ustackd 0.0.1"
     reader := bufio.NewReader(conn)
     writer := bufio.NewWriter(conn)
-    secret := "secret"
-    loggedin := false
-    quitting := false
-    realm := "ustackd 0.0.1"
+    context := ConnectionContext{conn, reader, writer, false, false}
 
-    fmt.Printf("new client connected %s\n", conn.RemoteAddr())
-    writer.WriteString(realm + " (user group)\r\n")
-    writer.Flush()
-    for !quitting {
+    context.Log("new client connected")
+    context.Write(realm + " (user group)\r\n")
+    for !context.quitting {
         line, err := reader.ReadString('\n')
         if err != nil {
-            // handle error
-            continue
+            break // quit connection
         } else {
             line = strings.ToLower(strings.Trim(line, " \r\n"))
         }
-
-        if strings.HasPrefix(line, "login") && len(line) >=6 {
-            passed := line[6:]
-
-            fmt.Printf("Try login with '%s'\n", passed)
-
-            if passed == secret {
-                writer.WriteString("+ OK\r\n")
-                loggedin = true
-            } else {
-                writer.WriteString("+ EPERM\r\n")
-            }
-        } else if line == "quit" {
-            writer.WriteString("+ BYE\r\n")
-            quitting = true
-        } else {
-            writer.WriteString("+ EFAULT\r\n")
-        }
-
-        if loggedin == true {
-            fmt.Printf("%b\n", loggedin)
-        }
-
-        fmt.Printf("%s\r\n", line)
-        writer.Flush()
+        interpret(&context, line)
     }
     conn.Close()
-    fmt.Printf("Client disonnected %s\n", conn.RemoteAddr())
+    context.Log("Client disonnected")
 }
 
 func main() {
-    listener, _ := net.Listen("tcp", ":7654")
+    listener, _ := net.Listen("tcp", "0.0.0.0:7654")
     fmt.Printf("ustackd listenting on 0.0.0.0:7654\n")
 
     for {
