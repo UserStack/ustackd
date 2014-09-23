@@ -13,27 +13,12 @@ func TestRead(t *testing.T) {
 		t.Errorf("Failed to parse gcfg data: %s", err)
 	}
 
-	type Daemon struct {
-		Interfaces, Realm, Backend string
-		Port int
-	}
-	type Syslog struct {
-		Level string
-	}
-	type Ssl struct {
-		Enabled bool
-		
-	}
-	type Sqlite struct {
-		Url string
-	}
-
 	var expected Config
 	expected = Config {
-		Daemon: Daemon { "0.0.0.0", "ustackd $VERSION$", "sqlite", 7654 },
-		Syslog: Syslog { "Debug" },
-		Ssl: Ssl { true },
-		Sqlite: Sqlite { "ustack.db" },
+		Daemon { "0.0.0.0", "ustackd $VERSION$", "sqlite", 7654 },
+		Syslog { "Debug" },
+		Ssl { true },
+		Sqlite { "ustack.db" },
 	}
 
 	if cfg != expected {
