@@ -35,14 +35,8 @@ This section describes the configuration of the ustackd.
     
     # The backend to use
     backend = sqlite
-    
-    # If enabled, the ssl section will be used to allow an encrypted connection
-    ; ssl
-    
-    [logging]
-    # which syslog facility should be used
-    facility = 3 # (system daemons)
-    
+
+    [syslog]
     # set the syslog log level
     # (Emergency, Alert, Critical, Error, Warning, Notice, Informational, Debug)
     level = Debug
@@ -64,6 +58,9 @@ This section describes the configuration of the ustackd.
     ; uid = ustack
     
     [ssl]
+    # status
+    enabled = 1
+    
     # Port where the daemon should listen with ssl/tls enabled
     ; port = 8765
     
