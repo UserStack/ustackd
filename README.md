@@ -72,12 +72,12 @@ This section describes the configuration of the ustackd.
     ; cert = /etc/ustack/cert.pem
     
     # protocols to support
-    # SSL v3.0 = 300
-    # TLS v1.0 = 301
-    # TLS v1.1 = 302
-    # TLS v1.2 = 303
-    ; protocol-min = 303
-    ; protocol-max = 303
+    # SSL v3.0 = 768
+    # TLS v1.0 = 769
+    # TLS v1.1 = 770
+    # TLS v1.2 = 771
+    ; protocol-min = 771
+    ; protocol-max = 771
     
     # ciphers to support
     ; ciphers = ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS
