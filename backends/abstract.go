@@ -1,18 +1,18 @@
-package Backends
+package backends
 
 type User struct {
-	uid   int
-	email string
+	Uid   int
+	Email string
 }
 
 type Group struct {
-	gid  int
-	name string
+	Gid  int
+	Name string
 }
 
 type Error struct {
-	code string
-	msg  string
+	Code string
+	Message  string
 }
 
 type Abstract interface {
@@ -24,8 +24,8 @@ type Abstract interface {
 	LoginUser(email string, password string) (int, *Error)
 	ChangeUserPassword(emailuid string, password string, newpassword string) *Error
 	ChangeUserEmail(emailuid string, password string, newemail string) *Error
-	UserGroups(email string, uid string) ([]Group, *Error)
-	DeleteUser(email string, uid string) *Error
+	UserGroups(emailuid string) ([]Group, *Error)
+	DeleteUser(emailuid string) *Error
 	Users() ([]User, *Error)
 	Group(name string) (int, *Error)
 	AddUserToGroup(emailuid string, groupgid string) *Error

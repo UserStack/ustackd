@@ -231,7 +231,7 @@ Return Codes:
 
 *Capability:* (user)
 
-    -> set <email,uid> <key> <value>
+    -> set <email|uid> <key> <value>
     <- + OK
 
 Return Codes:
@@ -302,7 +302,7 @@ Return Codes:
 
 *Capability:* (user group)
 
-    -> user groups <email,uid>
+    -> user groups <email|uid>
     <- administrators:1
     <- sales:20
     <- engineering:10
@@ -322,7 +322,7 @@ Return Codes:
 
 *Capability:* (user)
 
-    delete user <email,uid>
+    delete user <email|uid>
 
 Return Codes:
 
@@ -366,7 +366,7 @@ Return Codes:
 
 *Capability:* (user group)
 
-    -> add <email|uid> to <group|gid>
+    -> add <email|uid> <group|gid>
     <- + OK
 
 Return Codes:
@@ -378,7 +378,7 @@ Return Codes:
 
 *Capability:* (user group)
 
-    -> remove <email|uid> from <group|gid>
+    -> remove <email|uid> <group|gid>
     <- + OK
 
 Return Codes:

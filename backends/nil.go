@@ -1,4 +1,4 @@
-package Backends
+package backends
 
 type NilBackend struct {
 }
@@ -35,11 +35,11 @@ func (backend *NilBackend) ChangeUserEmail(emailuid string, password string, new
 	return nil
 }
 
-func (backend *NilBackend) UserGroups(email string, uid string) ([]Group, *Error) {
+func (backend *NilBackend) UserGroups(emailuid string) ([]Group, *Error) {
 	return nil, nil
 }
 
-func (backend *NilBackend) DeleteUser(email string, uid string) *Error {
+func (backend *NilBackend) DeleteUser(emailuid string) *Error {
 	return nil
 }
 
