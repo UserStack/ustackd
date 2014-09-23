@@ -18,6 +18,12 @@ type Context struct {
 	quitting bool
 }
 
+func NewContext(conn net.Conn, backend backends.Abstract) *Context {
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	return &Context{conn, reader, writer, backend, false, false}
+}
+
 func (context *Context) Write(line string) {
 	context.writer.WriteString(line + "\r\n")
 	context.writer.Flush()
@@ -52,6 +58,8 @@ func (context *Context) Close() {
 
 func (context *Context) Handle() {
 	context.Realm()
+	interpreter := Interpreter{context, context.backend}
+
 	for !context.quitting {
 		line, err := context.reader.ReadString('\n')
 		if err != nil {
@@ -59,13 +67,7 @@ func (context *Context) Handle() {
 		} else {
 			line = strings.ToLower(strings.Trim(line, " \r\n"))
 		}
-		interpret(context, line)
+		interpreter.parse(line)
 	}
 	context.Close()
-}
-
-func NewContext(conn net.Conn, backend backends.Abstract) *Context {
-	reader := bufio.NewReader(conn)
-	writer := bufio.NewWriter(conn)
-	return &Context{conn, reader, writer, backend, false, false}
 }

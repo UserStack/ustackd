@@ -1,8 +1,8 @@
 package config
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func TestRead(t *testing.T) {
@@ -17,12 +17,12 @@ func TestRead(t *testing.T) {
 	var nilInt int
 
 	expected := Config{
-		Daemon{[]string {"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", false},
+		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", false},
 		Syslog{3, "Debug"},
 		Security{nilString, nilString, nilString, nilString, nilString},
 		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
 		Sqlite{"ustack.db"},
-	}	
+	}
 
 	if !reflect.DeepEqual(cfg, expected) {
 		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
@@ -37,21 +37,20 @@ func TestReadAll(t *testing.T) {
 		t.Errorf("Failed to parse gcfg data: %s", err)
 	}
 
-
 	expected := Config{
-		Daemon{[]string {"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", true},
+		Daemon{[]string{"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", true},
 		Syslog{3, "Debug"},
 		Security{
-			"42421da75756d69832de50c3ab34f68ab5118b53", 
-			"6d95e4ac638daf4b786e94f30dc5bf6bb7118386", 
-			"/var/run/ustackd", 
-			"ustack", 
+			"42421da75756d69832de50c3ab34f68ab5118b53",
+			"6d95e4ac638daf4b786e94f30dc5bf6bb7118386",
+			"/var/run/ustackd",
+			"ustack",
 			"ustack",
 		},
 		Ssl{
-			true, 
-			[]string{"::1:8765"}, 
-			"/etc/ustack/key.pem", 
+			true,
+			[]string{"::1:8765"},
+			"/etc/ustack/key.pem",
 			"/etc/ustack/cert.pem",
 			"ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS",
 			771,

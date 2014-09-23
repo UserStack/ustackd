@@ -14,23 +14,23 @@ type Config struct {
 }
 
 type Daemon struct {
-	Listen []string
+	Listen         []string
 	Realm, Backend string
-	Foreground bool
+	Foreground     bool
 }
 
 type Syslog struct {
 	Facility int
-	Level string
+	Level    string
 }
 type Security struct {
 	Secret, Admin_Secret, Chroot, Gid, Uid string
 }
 
 type Ssl struct {
-	Enabled bool
-	Listen []string
-	Key, Cert, Ciphers string
+	Enabled                    bool
+	Listen                     []string
+	Key, Cert, Ciphers         string
 	Protocol_Min, Protocol_Max int
 }
 

@@ -1,8 +1,16 @@
 package backends
 
+import (
+	"fmt"
+)
+
 type User struct {
 	Uid   int
 	Email string
+}
+
+func (u User) Line() string {
+	return fmt.Sprintf("%s:%d", u.Email, u.Uid)
 }
 
 type Group struct {
@@ -10,9 +18,17 @@ type Group struct {
 	Name string
 }
 
+func (g Group) Line() string {
+	return fmt.Sprintf("%s:%d", g.Name, g.Gid)
+}
+
+type LineItem interface {
+	Line() string
+}
+
 type Error struct {
-	Code string
-	Message  string
+	Code    string
+	Message string
 }
 
 type Abstract interface {
