@@ -29,7 +29,7 @@ This section describes the configuration of the ustackd.
     
     # be default the daemon is in background, foreground at demand
     # by uncommenting foreground
-    ; foreground
+    ; foreground = 1
     
     # The backend to use
     backend = sqlite
@@ -44,7 +44,7 @@ This section describes the configuration of the ustackd.
     ; secret = 42421da75756d69832de50c3ab34f68ab5118b53
     
     # Secret that needs to be passed after connect to gain admin capabilities
-    ; admin_secret = 6d95e4ac638daf4b786e94f30dc5bf6bb7118386
+    ; admin-secret = 6d95e4ac638daf4b786e94f30dc5bf6bb7118386
     
     # change root to this location after start
     ; chroot = /var/run/ustackd
@@ -60,7 +60,7 @@ This section describes the configuration of the ustackd.
     enabled = 1
     
     # Interface and Port where the daemon should listen with ssl/tls enabled
-    ; listen = ::1:8765
+    ; listen = 0.0.0.0:8765
     
     # location of the private key in pem format 
     ; key = /etc/ustack/key.pem
@@ -69,7 +69,7 @@ This section describes the configuration of the ustackd.
     ; cert = /etc/ustack/cert.pem
     
     # protocols to support
-    ; protocol = SSLv3 TLSv1 TLSv1.1 TLSv1.2
+    ; protocols = SSLv3 TLSv1 TLSv1.1 TLSv1.2
     
     # ciphers to support
     ; ciphers = ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS

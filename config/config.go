@@ -8,21 +8,28 @@ import (
 type Config struct {
 	Daemon
 	Syslog
+	Security
 	Ssl
 	Sqlite
 }
 
 type Daemon struct {
 	Listen []string
-        Realm, Backend string
+	Realm, Backend string
+	Foreground bool
 }
 
 type Syslog struct {
 	Level string
 }
+type Security struct {
+	Secret, Admin_Secret, Chroot, Gid, Uid string
+}
 
 type Ssl struct {
 	Enabled bool
+	Listen []string
+	Key, Cert, Protocols, Ciphers string
 }
 
 type Sqlite struct {
