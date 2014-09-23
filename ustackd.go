@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"strconv"
 
-	// "github.com/UserStack/ustackd/config"
+	"github.com/UserStack/ustackd/config"
 	"github.com/UserStack/ustackd/backends"
 )
 
@@ -125,8 +126,11 @@ func ConnectionHandler(context *ConnectionContext) {
 }
 
 func main() {
-	listener, _ := net.Listen("tcp", "0.0.0.0:7654")
-	fmt.Printf("ustackd listenting on 0.0.0.0:7654\n")
+	var cfg config.Config
+	cfg, _ = config.Read("config/ustack.conf")
+	bindAddress := cfg.Daemon.Interfaces + ":" + strconv.Itoa(cfg.Daemon.Port)
+	listener, _ := net.Listen("tcp", bindAddress)
+	fmt.Printf("ustackd listenting on " + bindAddress + "\n")
 	var backend Backends.Abstract
 	backend = new(Backends.NilBackend)
 

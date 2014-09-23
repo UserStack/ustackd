@@ -9,11 +9,11 @@ type Config struct {
                 Interfaces, Realm, Backend string
                 Port int
         }
-        Logging struct {
+        Syslog struct {
         	Level string
-        	Facility int
         }
         Ssl struct {
+                Enabled bool
         	
         }
         Sqlite struct {
@@ -22,11 +22,11 @@ type Config struct {
 
 }
 
-func read(filename string) (Config, error) {	
+func Read(filename string) (Config, error) {	
 	var cfg Config
 	err := gcfg.ReadFileInto(&cfg, filename)
 	if err != nil {
-		fmt.Printf("Failed to parse gcfg data: %s", err)
+		fmt.Printf("Failed to parse %s: %s\n", filename, err)
 	}
 	return cfg, err
 }
