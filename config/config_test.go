@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"reflect"
 )
 
 func TestRead(t *testing.T) {
@@ -12,13 +13,13 @@ func TestRead(t *testing.T) {
 	}
 
 	expected := Config{
-		Daemon{"::1:7654", "ustackd $VERSION$", "sqlite"},
+		Daemon{[]string {"::1:7654", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite"},
 		Syslog{"Debug"},
 		Ssl{true},
 		Sqlite{"ustack.db"},
 	}
 
-	if cfg != expected {
+	if !reflect.DeepEqual(cfg, expected) {
 		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
 	}
 

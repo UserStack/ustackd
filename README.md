@@ -59,7 +59,7 @@ This section describes the configuration of the ustackd.
     # status
     enabled = 1
     
-    # Interface Port where the daemon should listen with ssl/tls enabled
+    # Interface and Port where the daemon should listen with ssl/tls enabled
     ; listen = ::1:8765
     
     # location of the private key in pem format 
