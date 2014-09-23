@@ -12,7 +12,7 @@ import (
 func main() {
 	var cfg config.Config
 	cfg, _ = config.Read("config/ustack.conf")
-	bindAddress := cfg.Daemon.Listen
+	bindAddress := cfg.Daemon.Listen[0]
 	listener, err := net.Listen("tcp", bindAddress)
 
 	if err != nil {

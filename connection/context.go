@@ -10,17 +10,17 @@ import (
 )
 
 type Context struct {
-	Conn     net.Conn
-	Reader   *bufio.Reader
-	Writer   *bufio.Writer
-	Backend  backends.Abstract
-	Loggedin bool
-	Quitting bool
+	conn     net.Conn
+	reader   *bufio.Reader
+	writer   *bufio.Writer
+	backend  backends.Abstract
+	loggedin bool
+	quitting bool
 }
 
 func (context *Context) Write(line string) {
-	context.Writer.WriteString(line + "\r\n")
-	context.Writer.Flush()
+	context.writer.WriteString(line + "\r\n")
+	context.writer.Flush()
 }
 
 func (context *Context) Ok() {
@@ -36,7 +36,7 @@ func (context *Context) Err(code string) {
 }
 
 func (context *Context) Log(line string) {
-	fmt.Printf("%s: %s\r\n", context.Conn.RemoteAddr(), line)
+	fmt.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
 }
 
 func (context *Context) Realm() {
@@ -46,14 +46,14 @@ func (context *Context) Realm() {
 }
 
 func (context *Context) Close() {
-	context.Conn.Close()
+	context.conn.Close()
 	context.Log("Client disonnected")
 }
 
 func (context *Context) Handle() {
 	context.Realm()
-	for !context.Quitting {
-		line, err := context.Reader.ReadString('\n')
+	for !context.quitting {
+		line, err := context.reader.ReadString('\n')
 		if err != nil {
 			break // quit connection
 		} else {
