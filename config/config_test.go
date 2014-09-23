@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"reflect"
 )
 
 func TestRead(t *testing.T) {
@@ -18,7 +19,7 @@ func TestRead(t *testing.T) {
 		Sqlite{"ustack.db"},
 	}
 
-	if cfg != expected {
+	if !reflect.DeepEqual(cfg, expected) {
 		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
 	}
 
