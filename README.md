@@ -39,9 +39,6 @@ This section describes the configuration of the ustackd.
     # If enabled, the ssl section will be used to allow an encrypted connection
     ; ssl
     
-    # Secret that needs to be passed after connect
-    ; secret = 42421da75756d69832de50c3ab34f68ab5118b53
-    
     [logging]
     # which syslog facility should be used
     facility = 3 # (system daemons)
@@ -51,6 +48,12 @@ This section describes the configuration of the ustackd.
     level = Debug
     
     [security]
+    # Secret that needs to be passed after connect
+    ; secret = 42421da75756d69832de50c3ab34f68ab5118b53
+    
+    # Secret that needs to be passed after connect to gain admin capabilities
+    ; admin_secret = 6d95e4ac638daf4b786e94f30dc5bf6bb7118386
+    
     # change root to this location after start
     ; chroot = /var/run/ustackd
     
@@ -162,17 +165,24 @@ is prefixed with a "+" otherwise with a minus, followed by the response code.
 
 ### Login
 
-If a secret is set, the client has to issue the login command. Consider SSL!
+*Capability:* ()
 
-    -> login secret
-    <- + OK
+If a secret is set, the client has to issue the client auth command in order
+to get access to the system. Depending on the secret the capabilities may
+change. This is useful, to for example not allow apps to list all users.
+Generally consider use of SSL/TLS!
+
+    -> client auth secret
+    <- + OK (user group admin)
 
 Return Codes:
 
-    OK: Ok
+    OK: Ok with a list of privileges
     EPERM: no valid secret
 
 ### General
+
+*Capability:* (admin)
 
     -> stats
     <- logins: 13435
@@ -187,6 +197,8 @@ Return Codes:
 
 #### Create user
 
+*Capability:* (user)
+
     -> user email password
     <- + OK 1
 
@@ -198,6 +210,8 @@ Return Codes:
 
 #### Disable user
 
+*Capability:* (user)
+
     -> disable <email|uid>
     <- + OK
 
@@ -208,6 +222,8 @@ Return Codes:
 
 #### Enable user
 
+*Capability:* (user)
+
     -> enable <email|uid>
     <- + OK
 
@@ -217,6 +233,8 @@ Return Codes:
     ENOENT: email or uid unknown
 
 #### Store data on the user object
+
+*Capability:* (user)
 
     -> set <email,uid> <key> <value>
     <- + OK
@@ -234,6 +252,8 @@ Recommended Keys:
 
 #### Get stored user object data
 
+*Capability:* (user)
+
     -> get <email,uid> <key>
     <- + OK
 
@@ -245,6 +265,8 @@ Return Codes:
 
 #### Login
 
+*Capability:* (user)
+
     -> login email password
     <- + OK 1
 
@@ -254,6 +276,8 @@ Return Codes:
     EPERM: email and password are not a valid combination
 
 #### Change password
+
+*Capability:* (user)
 
     -> change password <email|uid> <password> <newpassword>
     <- + OK
@@ -267,6 +291,8 @@ Return Codes:
 
 #### Change email
 
+*Capability:* (user)
+
     -> change email <email|uid> <password> <newemail>
     <- + OK
 
@@ -278,6 +304,8 @@ Return Codes:
     EINVAL: Parameter missing or invalid
 
 #### List all groups of a user
+
+*Capability:* (user group)
 
     -> user groups <email,uid>
     <- administrators:1
@@ -297,16 +325,38 @@ Return Codes:
     
 #### Delete user
 
+*Capability:* (user)
+
     delete user <email,uid>
 
 Return Codes:
 
     OK: Ok user deleted
     ENOENT: email or uid unknown
+    
+#### All users
+
+*Capability:* (user admin)
+
+    -> users
+    <- foo@bar.com:1
+    <- bar@example.com:2
+    <- mr@bean.com:3
+    <- + OK
+
+Format:
+
+    List of emails with user id: <email>:<uid>
+
+Return Codes:
+
+    OK: Ok
 
 ### Group Commands
 
 #### Create Group
+
+*Capability:* (group)
 
     -> group fooo
     <- + OK 1
@@ -319,7 +369,9 @@ Return Codes:
 
 #### Add user to group
 
-    -> add <user|uid> to <group|gid>
+*Capability:* (user group)
+
+    -> add <email|uid> to <group|gid>
     <- + OK
 
 Return Codes:
@@ -329,7 +381,9 @@ Return Codes:
     
 #### Remove user from group
 
-    -> remove <user|uid> to <group|gid>
+*Capability:* (user group)
+
+    -> remove <email|uid> from <group|gid>
     <- + OK
 
 Return Codes:
@@ -337,7 +391,9 @@ Return Codes:
     OK: Ok
     ENOENT: Group or user doesn't exist
 
-### delete group, user, permission, role
+#### Delete group, user, permission, role
+
+*Capability:* (group)
 
     -> delete group <group|gid>
     <- + OK
@@ -347,7 +403,9 @@ Return Codes:
     OK: Ok
     ENOENT: Group doesn't exist
     
-### groups
+#### Groups
+
+*Capability:* (group)
 
     -> groups
     <- administrators:1
@@ -355,6 +413,29 @@ Return Codes:
     <- engineering:10
     <- + OK
 
+Format:
+    
+    List of groups with group id: <group>:<gid>
+
 Return Codes:
 
     OK: Ok
+
+#### Groups of a user
+
+*Capability:* (user group admin)
+
+    -> group users <group|gid>
+    <- foo@bar.com:1
+    <- bar@example.com:2
+    <- mr@bean.com:3
+    <- + OK
+
+Format:
+
+    List of emails with user id: <email>:<uid>
+
+Return Codes:
+
+    OK: Ok
+    ENOENT: Group doesn't exist
