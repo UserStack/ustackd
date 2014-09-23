@@ -172,7 +172,7 @@ to get access to the system. Depending on the secret the capabilities may
 change. This is useful, to for example not allow apps to list all users.
 Generally consider use of SSL/TLS!
 
-    -> client auth secret
+    -> client auth <secret>
     <- + OK (user group admin)
 
 Return Codes:
@@ -199,7 +199,7 @@ Return Codes:
 
 *Capability:* (user)
 
-    -> user email password
+    -> user <email> <password>
     <- + OK 1
 
 Return Codes:
@@ -267,7 +267,7 @@ Return Codes:
 
 *Capability:* (user)
 
-    -> login email password
+    -> login <email> <password>
     <- + OK 1
 
 Return Codes:
@@ -358,7 +358,7 @@ Return Codes:
 
 *Capability:* (group)
 
-    -> group fooo
+    -> group <name>
     <- + OK 1
 
 Return Codes:
