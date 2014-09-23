@@ -20,6 +20,7 @@ type Daemon struct {
 }
 
 type Syslog struct {
+	Facility int
 	Level string
 }
 type Security struct {
@@ -29,7 +30,8 @@ type Security struct {
 type Ssl struct {
 	Enabled bool
 	Listen []string
-	Key, Cert, Protocols, Ciphers string
+	Key, Cert, Ciphers string
+	Protocol_Min, Protocol_Max int
 }
 
 type Sqlite struct {

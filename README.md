@@ -35,6 +35,9 @@ This section describes the configuration of the ustackd.
     backend = sqlite
 
     [syslog]
+    # which syslog facility should be used
+    facility = 3 # (system daemons)
+
     # set the syslog log level
     # (Emergency, Alert, Critical, Error, Warning, Notice, Informational, Debug)
     level = Debug
@@ -69,7 +72,12 @@ This section describes the configuration of the ustackd.
     ; cert = /etc/ustack/cert.pem
     
     # protocols to support
-    ; protocols = SSLv3 TLSv1 TLSv1.1 TLSv1.2
+    # SSL v3.0 = 300
+    # TLS v1.0 = 301
+    # TLS v1.1 = 302
+    # TLS v1.2 = 303
+    ; protocol-min = 303
+    ; protocol-max = 303
     
     # ciphers to support
     ; ciphers = ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS
