@@ -13,7 +13,8 @@ type Config struct {
 }
 
 type Daemon struct {
-	Listen, Realm, Backend string
+	Listen []string
+        Realm, Backend string
 }
 
 type Syslog struct {
