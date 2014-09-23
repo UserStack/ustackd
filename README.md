@@ -29,7 +29,7 @@ This section describes the configuration of the ustackd.
     
     # be default the daemon is in background, foreground at demand
     # by uncommenting foreground
-    ; foreground = 1
+    ; foreground = yes
     
     # The backend to use
     backend = sqlite
@@ -60,7 +60,7 @@ This section describes the configuration of the ustackd.
     
     [ssl]
     # status
-    enabled = 1
+    enabled = yes
     
     # Interface and Port where the daemon should listen with ssl/tls enabled
     ; listen = 0.0.0.0:8765
