@@ -8,241 +8,241 @@ import (
 )
 
 type Interpreter struct {
-	context *Context
+	*Context
 	backend backends.Abstract
 }
 
-func (interpreter *Interpreter) parse(line string) {
-	interpreter.context.Log(line)
+func (ip *Interpreter) parse(line string) {
+	ip.Log(line)
 	if strings.HasPrefix(line, "client auth ") {
-		interpreter.clientAuth(line[12:])
+		ip.clientAuth(line[12:])
 	} else if strings.HasPrefix(line, "login ") {
-		interpreter.login(line[6:])
+		ip.login(line[6:])
 	} else if strings.HasPrefix(line, "disable ") {
-		interpreter.disable(line[8:])
+		ip.disable(line[8:])
 	} else if strings.HasPrefix(line, "enable ") {
-		interpreter.enable(line[7:])
+		ip.enable(line[7:])
 	} else if strings.HasPrefix(line, "set ") {
-		interpreter.set(line[4:])
+		ip.set(line[4:])
 	} else if strings.HasPrefix(line, "get ") {
-		interpreter.get(line[4:])
+		ip.get(line[4:])
 	} else if strings.HasPrefix(line, "change password ") {
-		interpreter.changePassword(line[:16])
+		ip.changePassword(line[:16])
 	} else if strings.HasPrefix(line, "change email ") {
-		interpreter.changeEmail(line[:13])
+		ip.changeEmail(line[:13])
 	} else if strings.HasPrefix(line, "user groups ") {
-		interpreter.userGroups(line[:12])
+		ip.userGroups(line[:12])
 	} else if strings.HasPrefix(line, "user ") {
-		interpreter.user(line[:5])
+		ip.user(line[:5])
 	} else if strings.HasPrefix(line, "delete user ") {
-		interpreter.deleteUser(line[:12])
+		ip.deleteUser(line[:12])
 	} else if strings.HasPrefix(line, "users") {
-		interpreter.users(line[:5])
+		ip.users(line[:5])
 	} else if strings.HasPrefix(line, "add ") {
-		interpreter.add(line[:4])
+		ip.add(line[:4])
 	} else if strings.HasPrefix(line, "remove ") {
-		interpreter.remove(line[:7])
+		ip.remove(line[:7])
 	} else if strings.HasPrefix(line, "delete group ") {
-		interpreter.deleteGroup(line[:13])
+		ip.deleteGroup(line[:13])
 	} else if strings.HasPrefix(line, "groups") {
-		interpreter.groups(line[:6])
+		ip.groups(line[:6])
 	} else if strings.HasPrefix(line, "group users ") {
-		interpreter.groupUsers(line[:12])
+		ip.groupUsers(line[:12])
 	} else if strings.HasPrefix(line, "group ") {
-		interpreter.group(line[:6])
+		ip.group(line[:6])
 	} else if line == "quit" {
-		interpreter.quit(line)
+		ip.quit(line)
 	} else if line == "stats" {
-		interpreter.context.Ok()
+		ip.Ok()
 	} else {
-		interpreter.context.Err("EFAULT")
+		ip.Err("EFAULT")
 	}
 }
 
-func (interpreter *Interpreter) clientAuth(passwd string) {
-	interpreter.context.Log("Try login with '" + passwd + "'")
+func (ip *Interpreter) clientAuth(passwd string) {
+	ip.Log("Try login with '" + passwd + "'")
 
 	if passwd == "secret" {
-		interpreter.context.loggedin = true
-		interpreter.context.OkValue("(user group)")
+		ip.loggedin = true
+		ip.OkValue("(user group)")
 	} else {
-		interpreter.context.Err("EPERM")
+		ip.Err("EPERM")
 	}
 }
 
 // login <email> <password>
-func (interpreter *Interpreter) login(line string) {
-	interpreter.withArgs(line, 2, func(args []string) {
-		uid, err := interpreter.backend.LoginUser(args[0], args[1])
-		interpreter.intResponder(uid, err)
+func (ip *Interpreter) login(line string) {
+	ip.withArgs(line, 2, func(args []string) {
+		uid, err := ip.backend.LoginUser(args[0], args[1])
+		ip.intResponder(uid, err)
 	})
 }
 
 // disable <email|uid>
-func (interpreter *Interpreter) disable(emailuid string) {
-	interpreter.simpleResponder(interpreter.backend.DisableUser(emailuid))
+func (ip *Interpreter) disable(emailuid string) {
+	ip.simpleResponder(ip.backend.DisableUser(emailuid))
 }
 
 // enable <email|uid>
-func (interpreter *Interpreter) enable(emailuid string) {
-	interpreter.simpleResponder(interpreter.backend.EnableUser(emailuid))
+func (ip *Interpreter) enable(emailuid string) {
+	ip.simpleResponder(ip.backend.EnableUser(emailuid))
 }
 
 // set <email|uid> <key> <value>
-func (interpreter *Interpreter) set(line string) {
-	interpreter.withArgs(line, 3, func(args []string) {
-		interpreter.simpleResponder(
-			interpreter.backend.SetUserData(args[0], args[1], args[2]))
+func (ip *Interpreter) set(line string) {
+	ip.withArgs(line, 3, func(args []string) {
+		ip.simpleResponder(
+			ip.backend.SetUserData(args[0], args[1], args[2]))
 	})
 }
 
 // get <email|uid> <key>
-func (interpreter *Interpreter) get(line string) {
-	interpreter.withArgs(line, 2, func(args []string) {
-		interpreter.simpleResponder(interpreter.backend.GetUserData(args[0], args[1]))
+func (ip *Interpreter) get(line string) {
+	ip.withArgs(line, 2, func(args []string) {
+		ip.simpleResponder(ip.backend.GetUserData(args[0], args[1]))
 	})
 }
 
 // change password <email|uid> <password> <newpassword>
-func (interpreter *Interpreter) changePassword(line string) {
-	interpreter.withArgs(line, 3, func(args []string) {
-		interpreter.simpleResponder(
-			interpreter.backend.ChangeUserPassword(args[0], args[1], args[2]))
+func (ip *Interpreter) changePassword(line string) {
+	ip.withArgs(line, 3, func(args []string) {
+		ip.simpleResponder(
+			ip.backend.ChangeUserPassword(args[0], args[1], args[2]))
 	})
 }
 
 // change email <email|uid> <password> <newemail>
-func (interpreter *Interpreter) changeEmail(line string) {
-	interpreter.withArgs(line, 3, func(args []string) {
-		interpreter.simpleResponder(
-			interpreter.backend.ChangeUserEmail(args[0], args[1], args[2]))
+func (ip *Interpreter) changeEmail(line string) {
+	ip.withArgs(line, 3, func(args []string) {
+		ip.simpleResponder(
+			ip.backend.ChangeUserEmail(args[0], args[1], args[2]))
 	})
 }
 
 // user groups <email|uid>
-func (interpreter *Interpreter) userGroups(emailuid string) {
-	items, err := interpreter.backend.UserGroups(emailuid)
+func (ip *Interpreter) userGroups(emailuid string) {
+	items, err := ip.backend.UserGroups(emailuid)
 
 	if err != nil {
-		interpreter.context.Err(err.Code)
+		ip.Err(err.Code)
 	} else {
 		for _, item := range items {
-			interpreter.context.Write(item.Line())
+			ip.Write(item.Line())
 		}
-		interpreter.context.Ok()
+		ip.Ok()
 	}
 }
 
 // user <email> <password>
-func (interpreter *Interpreter) user(line string) {
-	interpreter.withArgs(line, 2, func(args []string) {
-		uid, err := interpreter.backend.CreateUser(args[0], args[1])
-		interpreter.intResponder(uid, err)
+func (ip *Interpreter) user(line string) {
+	ip.withArgs(line, 2, func(args []string) {
+		uid, err := ip.backend.CreateUser(args[0], args[1])
+		ip.intResponder(uid, err)
 	})
 }
 
 // delete user <email|uid>
-func (interpreter *Interpreter) deleteUser(emailuid string) {
-	interpreter.simpleResponder(interpreter.backend.DeleteUser(emailuid))
+func (ip *Interpreter) deleteUser(emailuid string) {
+	ip.simpleResponder(ip.backend.DeleteUser(emailuid))
 }
 
 // users
-func (interpreter *Interpreter) users(line string) {
-	items, err := interpreter.backend.Users()
+func (ip *Interpreter) users(line string) {
+	items, err := ip.backend.Users()
 
 	if err != nil {
-		interpreter.context.Err(err.Code)
+		ip.Err(err.Code)
 	} else {
 		for _, item := range items {
-			interpreter.context.Write(item.Line())
+			ip.Write(item.Line())
 		}
-		interpreter.context.Ok()
+		ip.Ok()
 	}
 }
 
 // add <email|uid> to <group|gid>
-func (interpreter *Interpreter) add(line string) {
-	interpreter.withArgs(line, 2, func(args []string) {
-		interpreter.simpleResponder(interpreter.backend.AddUserToGroup(args[0], args[1]))
+func (ip *Interpreter) add(line string) {
+	ip.withArgs(line, 2, func(args []string) {
+		ip.simpleResponder(ip.backend.AddUserToGroup(args[0], args[1]))
 	})
 }
 
 // remove <email|uid> from <group|gid>
-func (interpreter *Interpreter) remove(line string) {
-	interpreter.withArgs(line, 2, func(args []string) {
-		interpreter.simpleResponder(interpreter.backend.RemoveUserFromGroup(args[0], args[1]))
+func (ip *Interpreter) remove(line string) {
+	ip.withArgs(line, 2, func(args []string) {
+		ip.simpleResponder(ip.backend.RemoveUserFromGroup(args[0], args[1]))
 	})
 }
 
 // delete group <group|gid>
-func (interpreter *Interpreter) deleteGroup(groupgid string) {
-	interpreter.simpleResponder(interpreter.backend.DeleteGroup(groupgid))
+func (ip *Interpreter) deleteGroup(groupgid string) {
+	ip.simpleResponder(ip.backend.DeleteGroup(groupgid))
 }
 
 // groups
-func (interpreter *Interpreter) groups(line string) {
-	items, err := interpreter.backend.Groups()
+func (ip *Interpreter) groups(line string) {
+	items, err := ip.backend.Groups()
 
 	if err != nil {
-		interpreter.context.Err(err.Code)
+		ip.Err(err.Code)
 	} else {
 		for _, item := range items {
-			interpreter.context.Write(item.Line())
+			ip.Write(item.Line())
 		}
-		interpreter.context.Ok()
+		ip.Ok()
 	}
 }
 
 // group users <group|gid>
-func (interpreter *Interpreter) groupUsers(groupgid string) {
-	items, err := interpreter.backend.GroupUsers(groupgid)
+func (ip *Interpreter) groupUsers(groupgid string) {
+	items, err := ip.backend.GroupUsers(groupgid)
 
 	if err != nil {
-		interpreter.context.Err(err.Code)
+		ip.Err(err.Code)
 	} else {
 		for _, item := range items {
-			interpreter.context.Write(item.Line())
+			ip.Write(item.Line())
 		}
-		interpreter.context.Ok()
+		ip.Ok()
 	}
 }
 
 // group <name>
-func (interpreter *Interpreter) group(name string) {
-	gid, err := interpreter.backend.Group(name)
-	interpreter.intResponder(gid, err)
+func (ip *Interpreter) group(name string) {
+	gid, err := ip.backend.Group(name)
+	ip.intResponder(gid, err)
 }
 
-func (interpreter *Interpreter) quit(line string) {
-	interpreter.context.quitting = true
-	interpreter.context.Write("+ BYE")
+func (ip *Interpreter) quit(line string) {
+	ip.quitting = true
+	ip.Write("+ BYE")
 }
 
 // Helpers
 
 type withArgsFn func([]string)
 
-func (interpreter *Interpreter) withArgs(line string, n int, fn withArgsFn) {
+func (ip *Interpreter) withArgs(line string, n int, fn withArgsFn) {
 	args := strings.SplitN(line, " ", n)
 	if len(args) == n {
 		fn(args)
 	} else {
-		interpreter.context.Err("EFAULT")
+		ip.Err("EFAULT")
 	}
 }
 
-func (interpreter *Interpreter) simpleResponder(err *backends.Error) {
+func (ip *Interpreter) simpleResponder(err *backends.Error) {
 	if err != nil {
-		interpreter.context.Err(err.Code)
+		ip.Err(err.Code)
 	} else {
-		interpreter.context.Ok()
+		ip.Ok()
 	}
 }
 
-func (interpreter *Interpreter) intResponder(value int, err *backends.Error) {
+func (ip *Interpreter) intResponder(value int, err *backends.Error) {
 	if err != nil {
-		interpreter.context.Err(err.Code)
+		ip.Err(err.Code)
 	} else {
-		interpreter.context.OkValue(strconv.Itoa(value))
+		ip.OkValue(strconv.Itoa(value))
 	}
 }
