@@ -2,36 +2,25 @@ package connection
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"strings"
 
-	"github.com/UserStack/ustackd/backends"
-	"github.com/UserStack/ustackd/config"
+	"github.com/UserStack/ustackd/server"
 )
 
 type Context struct {
-	conn     net.Conn
-	reader   *bufio.Reader
-	writer   *bufio.Writer
-	logger   *log.Logger
-	cfg      *config.Config
-	backend  backends.Abstract
+	conn   net.Conn
+	reader *bufio.Reader
+	writer *bufio.Writer
+	*server.Server
 	loggedin bool
 	quitting bool
 }
 
-func NewContext(conn net.Conn, logger *log.Logger, cfg *config.Config, backend backends.Abstract) *Context {
+func NewContext(conn net.Conn, server *server.Server) *Context {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	return &Context{
-		conn:    conn,
-		reader:  reader,
-		writer:  writer,
-		logger:  logger,
-		cfg:     cfg,
-		backend: backend,
-	}
+	return &Context{conn, reader, writer, server, false, false}
 }
 
 func (context *Context) Write(line string) {
@@ -52,7 +41,7 @@ func (context *Context) Err(code string) {
 }
 
 func (context *Context) Log(line string) {
-	context.logger.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
+	context.Logger.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
 }
 
 func (context *Context) Realm() {
@@ -69,7 +58,7 @@ func (context *Context) Close() {
 func (context *Context) Handle() {
 	context.Realm()
 	defer context.Close()
-	interpreter := Interpreter{context, context.backend}
+	interpreter := Interpreter{context}
 
 	for !context.quitting {
 		line, err := context.reader.ReadString('\n')

@@ -9,7 +9,6 @@ import (
 
 type Interpreter struct {
 	*Context
-	backend backends.Abstract
 }
 
 func (ip *Interpreter) parse(line string) {
@@ -73,33 +72,33 @@ func (ip *Interpreter) clientAuth(passwd string) {
 // login <email> <password>
 func (ip *Interpreter) login(line string) {
 	ip.withArgs(line, 2, func(args []string) {
-		uid, err := ip.backend.LoginUser(args[0], args[1])
+		uid, err := ip.Backend.LoginUser(args[0], args[1])
 		ip.intResponder(uid, err)
 	})
 }
 
 // disable <email|uid>
 func (ip *Interpreter) disable(emailuid string) {
-	ip.simpleResponder(ip.backend.DisableUser(emailuid))
+	ip.simpleResponder(ip.Backend.DisableUser(emailuid))
 }
 
 // enable <email|uid>
 func (ip *Interpreter) enable(emailuid string) {
-	ip.simpleResponder(ip.backend.EnableUser(emailuid))
+	ip.simpleResponder(ip.Backend.EnableUser(emailuid))
 }
 
 // set <email|uid> <key> <value>
 func (ip *Interpreter) set(line string) {
 	ip.withArgs(line, 3, func(args []string) {
 		ip.simpleResponder(
-			ip.backend.SetUserData(args[0], args[1], args[2]))
+			ip.Backend.SetUserData(args[0], args[1], args[2]))
 	})
 }
 
 // get <email|uid> <key>
 func (ip *Interpreter) get(line string) {
 	ip.withArgs(line, 2, func(args []string) {
-		ip.simpleResponder(ip.backend.GetUserData(args[0], args[1]))
+		ip.simpleResponder(ip.Backend.GetUserData(args[0], args[1]))
 	})
 }
 
@@ -107,7 +106,7 @@ func (ip *Interpreter) get(line string) {
 func (ip *Interpreter) changePassword(line string) {
 	ip.withArgs(line, 3, func(args []string) {
 		ip.simpleResponder(
-			ip.backend.ChangeUserPassword(args[0], args[1], args[2]))
+			ip.Backend.ChangeUserPassword(args[0], args[1], args[2]))
 	})
 }
 
@@ -115,69 +114,69 @@ func (ip *Interpreter) changePassword(line string) {
 func (ip *Interpreter) changeEmail(line string) {
 	ip.withArgs(line, 3, func(args []string) {
 		ip.simpleResponder(
-			ip.backend.ChangeUserEmail(args[0], args[1], args[2]))
+			ip.Backend.ChangeUserEmail(args[0], args[1], args[2]))
 	})
 }
 
 // user groups <email|uid>
 func (ip *Interpreter) userGroups(emailuid string) {
-	items, err := ip.backend.UserGroups(emailuid)
+	items, err := ip.Backend.UserGroups(emailuid)
 	ip.groupResponder(items, err)
 }
 
 // user <email> <password>
 func (ip *Interpreter) user(line string) {
 	ip.withArgs(line, 2, func(args []string) {
-		uid, err := ip.backend.CreateUser(args[0], args[1])
+		uid, err := ip.Backend.CreateUser(args[0], args[1])
 		ip.intResponder(uid, err)
 	})
 }
 
 // delete user <email|uid>
 func (ip *Interpreter) deleteUser(emailuid string) {
-	ip.simpleResponder(ip.backend.DeleteUser(emailuid))
+	ip.simpleResponder(ip.Backend.DeleteUser(emailuid))
 }
 
 // users
 func (ip *Interpreter) users(line string) {
-	items, err := ip.backend.Users()
+	items, err := ip.Backend.Users()
 	ip.userResponder(items, err)
 }
 
 // add <email|uid> to <group|gid>
 func (ip *Interpreter) add(line string) {
 	ip.withArgs(line, 2, func(args []string) {
-		ip.simpleResponder(ip.backend.AddUserToGroup(args[0], args[1]))
+		ip.simpleResponder(ip.Backend.AddUserToGroup(args[0], args[1]))
 	})
 }
 
 // remove <email|uid> from <group|gid>
 func (ip *Interpreter) remove(line string) {
 	ip.withArgs(line, 2, func(args []string) {
-		ip.simpleResponder(ip.backend.RemoveUserFromGroup(args[0], args[1]))
+		ip.simpleResponder(ip.Backend.RemoveUserFromGroup(args[0], args[1]))
 	})
 }
 
 // delete group <group|gid>
 func (ip *Interpreter) deleteGroup(groupgid string) {
-	ip.simpleResponder(ip.backend.DeleteGroup(groupgid))
+	ip.simpleResponder(ip.Backend.DeleteGroup(groupgid))
 }
 
 // groups
 func (ip *Interpreter) groups(line string) {
-	items, err := ip.backend.Groups()
+	items, err := ip.Backend.Groups()
 	ip.groupResponder(items, err)
 }
 
 // group users <group|gid>
 func (ip *Interpreter) groupUsers(groupgid string) {
-	items, err := ip.backend.GroupUsers(groupgid)
+	items, err := ip.Backend.GroupUsers(groupgid)
 	ip.userResponder(items, err)
 }
 
 // group <name>
 func (ip *Interpreter) group(name string) {
-	gid, err := ip.backend.Group(name)
+	gid, err := ip.Backend.Group(name)
 	ip.intResponder(gid, err)
 }
 

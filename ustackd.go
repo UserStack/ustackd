@@ -10,6 +10,7 @@ import (
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/config"
 	"github.com/UserStack/ustackd/connection"
+	"github.com/UserStack/ustackd/server"
 	"github.com/codegangsta/cli"
 )
 
@@ -62,13 +63,15 @@ func main() {
 		var backend backends.Abstract
 		backend = new(backends.NilBackend)
 
+		server := server.Server{logger, &cfg, backend}
+
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
 				logger.Printf("Can't accept connection: %s\n", err)
 				continue
 			}
-			go connection.NewContext(conn, logger, &cfg, backend).Handle()
+			go connection.NewContext(conn, &server).Handle()
 		}
 	}
 
