@@ -14,9 +14,6 @@ import (
 )
 
 func main() {
-	var cfg config.Config
-	cfg, _ = config.Read("config/ustack.conf")
-
 	app := cli.NewApp()
 	app.Name = "ustackd"
 	app.Usage = "the UserStack daemon"
@@ -33,6 +30,12 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) {
+		cfg, err := config.Read(c.String("config"))
+		if err != nil {
+			fmt.Printf("Unable read config file: %s\n", err)
+			return
+		}
+
 		bindAddress := cfg.Daemon.Listen[0]
 		listener, err := net.Listen("tcp", bindAddress)
 		var logger *log.Logger
@@ -65,7 +68,7 @@ func main() {
 				logger.Printf("Can't accept connection: %s\n", err)
 				continue
 			}
-			go connection.NewContext(conn, logger, backend).Handle()
+			go connection.NewContext(conn, logger, &cfg, backend).Handle()
 		}
 	}
 

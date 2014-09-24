@@ -7,27 +7,30 @@ import (
 	"strings"
 
 	"github.com/UserStack/ustackd/backends"
+	"github.com/UserStack/ustackd/config"
 )
 
 type Context struct {
 	conn     net.Conn
 	reader   *bufio.Reader
 	writer   *bufio.Writer
-	backend  backends.Abstract
 	logger   *log.Logger
+	cfg      *config.Config
+	backend  backends.Abstract
 	loggedin bool
 	quitting bool
 }
 
-func NewContext(conn net.Conn, logger *log.Logger, backend backends.Abstract) *Context {
+func NewContext(conn net.Conn, logger *log.Logger, cfg *config.Config, backend backends.Abstract) *Context {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 	return &Context{
 		conn:    conn,
 		reader:  reader,
 		writer:  writer,
-		backend: backend,
 		logger:  logger,
+		cfg:     cfg,
+		backend: backend,
 	}
 }
 
