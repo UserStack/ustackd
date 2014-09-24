@@ -1,9 +1,10 @@
 build:
 	go build
 
-dependencies:
-	go get -u code.google.com/p/gcfg
-	go get -u github.com/codegangsta/cli
+prepare:
+	go get -u code.google.com/p/gcfg \
+		github.com/codegangsta/cli \
+		github.com/mattn/go-sqlite3
 
 fmt:
 	cd backends && go fmt
