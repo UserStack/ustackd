@@ -5,41 +5,37 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	backend, err := NewSqliteBackend(":memory:")
-	if err != nil {
-		t.Error(err)
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
 	}
-	// defer backend.Close()
+	defer backend.Close()
 
 	// works first time
-	uid, berr := backend.CreateUser("test@example.com", "secret")
-	if uid <= 0 || berr != nil {
-		t.Error(berr, "also expect uid to be greater than 0")
+	uid, _ := backend.CreateUser("test@example.com", "secret")
+	if uid <= 0 {
+		t.Fatal("expect uid to be greater than 0")
 	}
 
 	// but fails second time with EEXIST
-	uid, berr2 := backend.CreateUser("test@example.com", "secret")
-	if uid > 0 || berr2.Code != "EEXIST" {
-		t.Error("Should return EEXIST instead of", berr2.Code)
+	_, berr2 := backend.CreateUser("test@example.com", "secret")
+	if berr2.Code != "EEXIST" {
+		t.Fatal("should return EEXIST instead of", berr2.Code)
 	}
 
 	// and fails with invalid data password ...
-	uid, berr3 := backend.CreateUser("test@example.com", "")
-	if uid > 0 || berr3.Code != "EINVAL" {
-		t.Error("Should return EINVAL instead of", berr3.Code)
+	_, berr3 := backend.CreateUser("test@example.com", "")
+	if berr3.Code != "EINVAL" {
+		t.Fatal("should return EINVAL instead of", berr3.Code)
 	}
 
 	// ... or email
-	uid, berr4 := backend.CreateUser("", "secret")
-	if uid > 0 || berr4.Code != "EINVAL" {
-		t.Error("Should return EINVAL instead of", berr4.Code)
+	_, berr4 := backend.CreateUser("", "secret")
+	if berr4.Code != "EINVAL" {
+		t.Fatal("should return EINVAL instead of", berr4.Code)
 	}
 }
 
-// func (backend *SqliteBackend) CreateUser(email string, password string) (int, *Error) {
-//     return 0, nil
-// }
-//
 // func (backend *SqliteBackend) DisableUser(emailuid string) *Error {
 //     return nil
 // }
@@ -71,11 +67,79 @@ func TestCreateUser(t *testing.T) {
 // func (backend *SqliteBackend) UserGroups(emailuid string) ([]Group, *Error) {
 //     return nil, nil
 // }
-//
+
+func TestDeleteUser(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	err := backend.DeleteUser("")
+	if err.Code != "EINVAL" {
+		t.Fatal("should error on missing parameter")
+	}
+
+	// create two users
+	backend.CreateUser("test0@example.com", "secret")
+	backend.CreateUser("test1@example.com", "secret")
+
+	// now has two users
+	users, _ := backend.Users()
+	if len(users) != 2 {
+		t.Fatal("user count should have been 2 but was", len(users))
+	}
+
+	// delete one using email
+	backend.DeleteUser("test1@example.com")
+	users, _ = backend.Users()
+	if len(users) != 1 {
+		t.Fatal("user count should have been 1 but was", len(users))
+	}
+
+	// delete one using uid
+	backend.DeleteUser("1")
+	users, _ = backend.Users()
+	if len(users) != 0 {
+		t.Fatal("user count should have been 0 but was", len(users))
+	}
+}
+
 // func (backend *SqliteBackend) DeleteUser(emailuid string) *Error {
 //     return nil
 // }
-//
+
+func TestUsers(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	users, _ := backend.Users()
+	if len(users) != 0 {
+		t.Fatal("users should be empty and is ", len(users))
+	}
+
+	// create a user
+	uid, _ := backend.CreateUser("test@example.com", "secret")
+	if uid <= 0 {
+		t.Fatal("expect uid to be greater than 0")
+	}
+
+	// the list should have one enties now
+	users, _ = backend.Users()
+	if len(users) != 1 {
+		t.Fatal("users should be empty and is ", len(users))
+	}
+	if users[0].Email != "test@example.com" {
+		t.Fatal("email should have been 'test@example.com' but was", users[0].Email)
+	}
+	if users[0].Uid != 1 {
+		t.Fatal("email should have been 1 but was", users[0].Uid)
+	}
+}
+
 // func (backend *SqliteBackend) Users() ([]User, *Error) {
 //     return nil, nil
 // }

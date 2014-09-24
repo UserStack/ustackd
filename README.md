@@ -343,6 +343,7 @@ Return Codes:
 
     OK: Ok user deleted
     ENOENT: email or uid unknown
+    EINVAL: Parameter missing or invalid
     
 #### All users
 

@@ -1,7 +1,7 @@
 package connection
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 
 	"github.com/UserStack/ustackd/backends"
@@ -206,11 +206,11 @@ func (ip *Interpreter) simpleResponder(err *backends.Error) {
 	}
 }
 
-func (ip *Interpreter) intResponder(value int, err *backends.Error) {
+func (ip *Interpreter) intResponder(value int64, err *backends.Error) {
 	if err != nil {
 		ip.Err(err.Code)
 	} else {
-		ip.OkValue(strconv.Itoa(value))
+		ip.OkValue(fmt.Sprintf("%d", value))
 	}
 }
 

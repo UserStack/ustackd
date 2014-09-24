@@ -3,7 +3,7 @@ package backends
 type NilBackend struct {
 }
 
-func (backend *NilBackend) CreateUser(email string, password string) (int, *Error) {
+func (backend *NilBackend) CreateUser(email string, password string) (int64, *Error) {
 	return 0, nil
 }
 
@@ -23,7 +23,7 @@ func (backend *NilBackend) GetUserData(emailuid string, key string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) LoginUser(email string, password string) (int, *Error) {
+func (backend *NilBackend) LoginUser(email string, password string) (int64, *Error) {
 	return 0, nil
 }
 
@@ -47,7 +47,7 @@ func (backend *NilBackend) Users() ([]User, *Error) {
 	return nil, nil
 }
 
-func (backend *NilBackend) Group(name string) (int, *Error) {
+func (backend *NilBackend) Group(name string) (int64, *Error) {
 	return 0, nil
 }
 
@@ -69,4 +69,8 @@ func (backend *NilBackend) Groups() ([]Group, *Error) {
 
 func (backend *NilBackend) GroupUsers(groupgid string) ([]User, *Error) {
 	return nil, nil
+}
+
+func (backend *NilBackend) Close() {
+
 }
