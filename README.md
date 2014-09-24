@@ -42,13 +42,17 @@ This section describes the configuration of the ustackd.
     # (Emergency, Alert, Critical, Error, Warning, Notice, Informational, Debug)
     level = Debug
     
-    [security]
-    # Secret that needs to be passed after connect
-    ; secret = 42421da75756d69832de50c3ab34f68ab5118b53
+    [client]
+    # client that is allowed to issue all commands (e.g. web gui)
+    auth = 42421da75756d69832d:deny://
+        
+    # client that is restricted to certain commands (e.g. auth server)
+    auth = 6d95e4ac638daf4b786:allow:/^(login|set|get|change (password|email))/
     
-    # Secret that needs to be passed after connect to gain admin capabilities
-    ; admin-secret = 6d95e4ac638daf4b786e94f30dc5bf6bb7118386
+    # client that can manage everything, but is secure from data stealing
+    auth = 04d6eb93ab5d30f7bb0:deny:/^(users|groups|group users)/
     
+    [security]    
     # change root to this location after start
     ; chroot = /var/run/ustackd
     
