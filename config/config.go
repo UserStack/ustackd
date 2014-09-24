@@ -25,9 +25,9 @@ type Config struct {
 }
 
 type Daemon struct {
-	Listen         []string
-	Realm, Backend string
-	Foreground     bool
+	Listen                   []string
+	Realm, Backend, Pid_Path string
+	Foreground               bool
 }
 
 type Syslog struct {

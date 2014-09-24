@@ -34,6 +34,9 @@ This section describes the configuration of the ustackd.
     # The backend to use
     backend = sqlite
 
+    # path to folder where pid file can be stored
+    ; pid-path = /var/run
+
     [syslog]
     # which syslog facility should be used
     facility = 3 # (system daemons)
