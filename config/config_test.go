@@ -19,12 +19,7 @@ func TestRead(t *testing.T) {
 	expected := Config{
 		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", nilString, false},
 		Syslog{3, "Debug"},
-		ClientAuth{[]Auth{
-			Auth{"42421da75756d69832d", "//", false},
-			Auth{"6d95e4ac638daf4b786", "/^(login|set|get|change (password|email))/", true},
-			Auth{"04d6eb93ab5d30f7bb0", "/^(users|groups|group users)/", false},
-		},
-		},
+		ClientAuth{[]Auth{}},
 		Security{nilString, nilString, nilString},
 		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
 		Sqlite{"ustack.db"},
@@ -46,7 +41,12 @@ func TestReadAll(t *testing.T) {
 	expected := Config{
 		Daemon{[]string{"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", "/var/run", true},
 		Syslog{3, "Debug"},
-		ClientAuth{[]Auth{}},
+		ClientAuth{[]Auth{
+			Auth{"42421da75756d69832d", "//", false},
+			Auth{"6d95e4ac638daf4b786", "/^(login|set|get|change (password|email))/", true},
+			Auth{"04d6eb93ab5d30f7bb0", "/^(users|groups|group users)/", false},
+		},
+		},
 		Security{
 			"/var/run/ustackd",
 			"ustack",
