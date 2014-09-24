@@ -2,7 +2,7 @@ package connection
 
 import (
 	"bufio"
-	"fmt"
+	"log"
 	"net"
 	"strings"
 
@@ -14,14 +14,21 @@ type Context struct {
 	reader   *bufio.Reader
 	writer   *bufio.Writer
 	backend  backends.Abstract
+	logger   *log.Logger
 	loggedin bool
 	quitting bool
 }
 
-func NewContext(conn net.Conn, backend backends.Abstract) *Context {
+func NewContext(conn net.Conn, logger *log.Logger, backend backends.Abstract) *Context {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	return &Context{conn, reader, writer, backend, false, false}
+	return &Context{
+		conn:    conn,
+		reader:  reader,
+		writer:  writer,
+		backend: backend,
+		logger:  logger,
+	}
 }
 
 func (context *Context) Write(line string) {
@@ -42,7 +49,7 @@ func (context *Context) Err(code string) {
 }
 
 func (context *Context) Log(line string) {
-	fmt.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
+	context.logger.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
 }
 
 func (context *Context) Realm() {
@@ -53,7 +60,7 @@ func (context *Context) Realm() {
 
 func (context *Context) Close() {
 	context.conn.Close()
-	context.Log("Client disonnected")
+	context.Log("Client disconnected")
 }
 
 func (context *Context) Handle() {

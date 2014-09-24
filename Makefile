@@ -3,6 +3,7 @@ build:
 
 dependencies:
 	go get -u code.google.com/p/gcfg
+	go get -u github.com/codegangsta/cli
 
 fmt:
 	cd backends && go fmt
