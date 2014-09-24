@@ -21,14 +21,14 @@ This section describes the configuration of the ustackd.
 
     [Daemon]
     # Interface and port where the daemon should listen
-    listen = ::1:7654
+    listen = 0.0.0.0:7654
     ; listen = 127.0.0.1:7654
 
     # the realm send by the server after connect
     realm = ustackd $VERSION$
     
     # be default the daemon is in background, foreground at demand
-    # by uncommenting foreground
+    # in foreground mode the syslog is disabled and logging appears on STDOUT
     ; foreground = yes
     
     # The backend to use
@@ -52,7 +52,7 @@ This section describes the configuration of the ustackd.
     # client that can manage everything, but is secure from data stealing
     auth = 04d6eb93ab5d30f7bb0:deny:/^(users|groups|group users)/
     
-    [security]    
+    [security]
     # change root to this location after start
     ; chroot = /var/run/ustackd
     
@@ -92,7 +92,7 @@ This section describes the configuration of the ustackd.
     
 ## Daemon command line options
 
-    ustackd [-f config file]
+    ustackd [-c config file] [-f|--foreground]
     
 If now config file is passed, the file will be searched in the following 
 locations in order:
