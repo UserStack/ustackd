@@ -122,15 +122,7 @@ func (ip *Interpreter) changeEmail(line string) {
 // user groups <email|uid>
 func (ip *Interpreter) userGroups(emailuid string) {
 	items, err := ip.backend.UserGroups(emailuid)
-
-	if err != nil {
-		ip.Err(err.Code)
-	} else {
-		for _, item := range items {
-			ip.Write(item.Line())
-		}
-		ip.Ok()
-	}
+	ip.groupResponder(items, err)
 }
 
 // user <email> <password>
@@ -149,15 +141,7 @@ func (ip *Interpreter) deleteUser(emailuid string) {
 // users
 func (ip *Interpreter) users(line string) {
 	items, err := ip.backend.Users()
-
-	if err != nil {
-		ip.Err(err.Code)
-	} else {
-		for _, item := range items {
-			ip.Write(item.Line())
-		}
-		ip.Ok()
-	}
+	ip.userResponder(items, err)
 }
 
 // add <email|uid> to <group|gid>
@@ -182,29 +166,13 @@ func (ip *Interpreter) deleteGroup(groupgid string) {
 // groups
 func (ip *Interpreter) groups(line string) {
 	items, err := ip.backend.Groups()
-
-	if err != nil {
-		ip.Err(err.Code)
-	} else {
-		for _, item := range items {
-			ip.Write(item.Line())
-		}
-		ip.Ok()
-	}
+	ip.groupResponder(items, err)
 }
 
 // group users <group|gid>
 func (ip *Interpreter) groupUsers(groupgid string) {
 	items, err := ip.backend.GroupUsers(groupgid)
-
-	if err != nil {
-		ip.Err(err.Code)
-	} else {
-		for _, item := range items {
-			ip.Write(item.Line())
-		}
-		ip.Ok()
-	}
+	ip.userResponder(items, err)
 }
 
 // group <name>
@@ -244,5 +212,27 @@ func (ip *Interpreter) intResponder(value int, err *backends.Error) {
 		ip.Err(err.Code)
 	} else {
 		ip.OkValue(strconv.Itoa(value))
+	}
+}
+
+func (ip *Interpreter) groupResponder(items []backends.Group, err *backends.Error) {
+	if err != nil {
+		ip.Err(err.Code)
+	} else {
+		for _, item := range items {
+			ip.Write(item.String())
+		}
+		ip.Ok()
+	}
+}
+
+func (ip *Interpreter) userResponder(items []backends.User, err *backends.Error) {
+	if err != nil {
+		ip.Err(err.Code)
+	} else {
+		for _, item := range items {
+			ip.Write(item.String())
+		}
+		ip.Ok()
 	}
 }

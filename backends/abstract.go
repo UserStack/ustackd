@@ -9,7 +9,7 @@ type User struct {
 	Email string
 }
 
-func (u User) Line() string {
+func (u User) String() string {
 	return fmt.Sprintf("%s:%d", u.Email, u.Uid)
 }
 
@@ -18,12 +18,8 @@ type Group struct {
 	Name string
 }
 
-func (g Group) Line() string {
+func (g Group) String() string {
 	return fmt.Sprintf("%s:%d", g.Name, g.Gid)
-}
-
-type LineItem interface {
-	Line() string
 }
 
 type Error struct {

@@ -58,16 +58,15 @@ func (context *Context) Close() {
 
 func (context *Context) Handle() {
 	context.Realm()
+	defer context.Close()
 	interpreter := Interpreter{context, context.backend}
 
 	for !context.quitting {
 		line, err := context.reader.ReadString('\n')
 		if err != nil {
 			break // quit connection
-		} else {
-			line = strings.ToLower(strings.Trim(line, " \r\n"))
 		}
+		line = strings.ToLower(strings.Trim(line, " \r\n"))
 		interpreter.parse(line)
 	}
-	context.Close()
 }
