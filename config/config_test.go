@@ -80,3 +80,43 @@ func TestNoFile(t *testing.T) {
 		t.Errorf("Got error: %s, but expected %s, ", err.Error(), expectedFileNotFoundError)
 	}
 }
+
+func TestSplitAuth(t *testing.T) {
+	var configIntern ConfigIntern
+	configIntern.Client = Client{Auth: []string{"a:b:c"}}
+	config, err := splitAuth(configIntern)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	expected := ClientAuth{[]Auth{Auth{"a", "c", false}}}
+	if !reflect.DeepEqual(config.ClientAuth, expected) {
+		t.Errorf("Config.ClientAuth is expected to be %+v, but is %+v", expected, config.ClientAuth)
+	}
+
+}
+
+func TestSplitAuthAllow(t *testing.T) {
+	var configIntern ConfigIntern
+	configIntern.Client = Client{Auth: []string{"a:allow:c"}}
+	config, err := splitAuth(configIntern)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	expected := ClientAuth{[]Auth{Auth{"a", "c", true}}}
+	if !reflect.DeepEqual(config.ClientAuth, expected) {
+		t.Errorf("Config.ClientAuth is expected to be %+v, but is %+v", expected, config.ClientAuth)
+	}
+
+}
+
+func TestSplitAuthFail(t *testing.T) {
+	var configIntern ConfigIntern
+	configIntern.Client = Client{Auth: []string{"a:b"}}
+	_, err := splitAuth(configIntern)
+	if err.Error() != "Could not split [client] auth line into 3 parts (Id, Command, Regex): a:b" {
+		t.Error("Failed to fail when 1 part is missing")
+	}
+
+}

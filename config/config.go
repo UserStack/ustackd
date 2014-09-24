@@ -68,7 +68,6 @@ func Read(filename string) (Config, error) {
 	var config Config
 	err := gcfg.ReadFileInto(&cfgIntern, filename)
 	if err != nil {
-		fmt.Printf("Failed to parse %s: %s\n", filename, err)
 		return config, err
 	}
 
