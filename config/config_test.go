@@ -17,7 +17,7 @@ func TestRead(t *testing.T) {
 	var nilInt int
 
 	expected := Config{
-		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", nilString, false},
+		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", "./", false},
 		Syslog{3, "Debug"},
 		ClientAuth{[]Auth{}},
 		Security{nilString, nilString, nilString},
