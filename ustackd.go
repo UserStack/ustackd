@@ -95,9 +95,9 @@ func main() {
 }
 
 func checkSignal(pidfile string, running *bool, listener net.Listener) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill)
-	<-c //Block until a signal is received
+	channel := make(chan os.Signal, 1)
+	signal.Notify(channel, os.Interrupt, os.Kill)
+	<-channel //Block until a signal is received
 	os.Remove(pidfile)
 	*running = false
 	listener.Close()
@@ -124,25 +124,25 @@ func checkPidFile(pidFile, appname string) (err error) {
 }
 
 func readPidFile(pidFile string) (pid int, err error) {
-	f, _ := os.Open(pidFile)
-	defer f.Close()
-	r := bufio.NewReaderSize(f, 5)
-	line, _, err := r.ReadLine()
+	file, err := os.Open(pidFile)
+	defer file.Close()
+	if err != nil {
+		return
+	}
+	reader := bufio.NewReaderSize(file, 5)
+	line, _, err := reader.ReadLine()
 	if err != nil {
 		return
 	}
 	pid, err = strconv.Atoi(string(line))
-	if err != nil {
-		return
-	}
 	return
 }
 
 func writePidFile(pidFile string) {
-	f, err := os.Create(pidFile)
-	defer f.Close()
+	file, err := os.Create(pidFile)
+	defer file.Close()
 	if err == nil {
 		pid := os.Getpid()
-		f.WriteString(strconv.Itoa(pid))
+		file.WriteString(strconv.Itoa(pid))
 	}
 }
