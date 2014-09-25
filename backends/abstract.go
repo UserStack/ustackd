@@ -32,7 +32,7 @@ type Abstract interface {
 	DisableUser(emailuid string) *Error
 	EnableUser(emailuid string) *Error
 	SetUserData(emailuid string, key string, value string) *Error
-	GetUserData(emailuid string, key string) *Error
+	GetUserData(emailuid string, key string) (string, *Error)
 	LoginUser(email string, password string) (int64, *Error)
 	ChangeUserPassword(emailuid string, password string, newpassword string) *Error
 	ChangeUserEmail(emailuid string, password string, newemail string) *Error

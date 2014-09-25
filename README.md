@@ -265,12 +265,13 @@ Recommended Keys:
 *Capability:* (user)
 
     -> get <email,uid> <key>
+    <- <value>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email or uid unknown
+    ENOENT: email, uid or key unknown
     EINVAL: Parameter missing or invalid
 
 #### Login

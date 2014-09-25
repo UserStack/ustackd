@@ -98,7 +98,11 @@ func (ip *Interpreter) set(line string) {
 // get <email|uid> <key>
 func (ip *Interpreter) get(line string) {
 	ip.withArgs(line, 2, func(args []string) {
-		ip.simpleResponder(ip.Backend.GetUserData(args[0], args[1]))
+		val, err := ip.Backend.GetUserData(args[0], args[1])
+		if err == nil {
+			ip.Write(val)
+		}
+		ip.simpleResponder(err)
 	})
 }
 

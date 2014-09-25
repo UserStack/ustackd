@@ -19,8 +19,8 @@ func (backend *NilBackend) SetUserData(emailuid string, key string, value string
 	return nil
 }
 
-func (backend *NilBackend) GetUserData(emailuid string, key string) *Error {
-	return nil
+func (backend *NilBackend) GetUserData(emailuid string, key string) (string, *Error) {
+	return "", nil
 }
 
 func (backend *NilBackend) LoginUser(email string, password string) (int64, *Error) {

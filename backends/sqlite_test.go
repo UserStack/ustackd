@@ -74,17 +74,65 @@ func TestEnableDisableUser(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) EnableUser(emailuid string) *Error {
-//     return nil
-// }
-//
-// func (backend *SqliteBackend) SetUserData(emailuid string, key string, value string) *Error {
-//     return nil
-// }
-//
-// func (backend *SqliteBackend) GetUserData(emailuid string, key string) *Error {
-//     return nil
-// }
+func TestSetGetUserData(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	err := backend.SetUserData("test@example.com", "firstname", "Tester")
+	if err.Code != "ENOENT" {
+		t.Fatal("should fail to set value on non existing user", err.Code)
+	}
+
+	err1 := backend.SetUserData("1", "firstname", "Tester")
+	if err1.Code != "ENOENT" {
+		t.Fatal("should fail to set value on non existing user", err1.Code)
+	}
+
+	_, err2 := backend.GetUserData("test@example.com", "firstname")
+	if err2.Code != "ENOENT" {
+		t.Fatal("should fail to set value on non existing user", err2.Code)
+	}
+
+	_, err3 := backend.GetUserData("1", "firstname")
+	if err3.Code != "ENOENT" {
+		t.Fatal("should fail to set value on non existing user", err3.Code)
+	}
+
+	intval := backend.SetUserData("", "firstname", "Tester")
+	if intval.Code != "EINVAL" {
+		t.Fatal("should fail to set value on non invalid email", intval.Code)
+	}
+
+	intval1 := backend.SetUserData("test@example.com", "", "Tester")
+	if intval1.Code != "EINVAL" {
+		t.Fatal("should fail to set value on non invalid key", intval1.Code)
+	}
+
+	intval2 := backend.SetUserData("test@example.com", "firstname", "")
+	if intval2.Code != "EINVAL" {
+		t.Fatal("should fail to set value on non invalid value", intval2.Code)
+	}
+
+	_, intval3 := backend.GetUserData("", "firstname")
+	if intval3.Code != "EINVAL" {
+		t.Fatal("should fail to set value on non invalid value", intval3.Code)
+	}
+
+	_, intval4 := backend.GetUserData("test@example.com", "")
+	if intval4.Code != "EINVAL" {
+		t.Fatal("should fail to set value on non invalid value", intval4.Code)
+	}
+
+	backend.CreateUser("test@example.com", "secret")
+	backend.SetUserData("test@example.com", "firstname", "Tester")
+	val, _ := backend.GetUserData("test@example.com", "firstname")
+	if val != "Tester" {
+		t.Fatal("the value should have been 'Tester' but was", val)
+	}
+}
 
 func TestLoginUser(t *testing.T) {
 	backend, dberr := NewSqliteBackend(":memory:")
