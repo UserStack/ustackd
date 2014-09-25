@@ -7,8 +7,10 @@ import (
 	"log/syslog"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strconv"
+	"strings"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/config"
@@ -40,14 +42,7 @@ func main() {
 			return
 		}
 
-		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
-		checkPidFile(pidFile)
-		setPidFile(pidFile)
-
-		bindAddress := cfg.Daemon.Listen[0]
-		listener, err := net.Listen("tcp", bindAddress)
 		var logger *log.Logger
-
 		if c.Bool("foreground") || cfg.Daemon.Foreground {
 			logger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
 		} else {
@@ -56,10 +51,21 @@ func main() {
 				log.LstdFlags|log.Lmicroseconds)
 
 			if err != nil {
-				fmt.Printf("Unable to connecto to syslog: %s\n", err)
+				fmt.Printf("Unable to connect to syslog: %s\n", err)
 				return
 			}
 		}
+
+		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
+		err = checkPidFile(pidFile, app.Name)
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		writePidFile(pidFile)
+
+		bindAddress := cfg.Daemon.Listen[0]
+		listener, err := net.Listen("tcp", bindAddress)
 
 		if err != nil {
 			logger.Printf("Unable to listen: %s\n", err)
@@ -97,25 +103,46 @@ func checkSignal(pidfile string, running *bool, listener net.Listener) {
 	listener.Close()
 }
 
-func checkPidFile(filename string) {
-	if _, err := os.Stat(filename); err == nil {
-		fmt.Printf("Found PID: %d\n", getPidFile(filename))
+func checkPidFile(pidFile, appname string) (err error) {
+	if _, ferr := os.Stat(pidFile); ferr != nil {
+		return
 	}
+	pid, err := readPidFile(pidFile)
+	if err != nil {
+		return
+	}
+	output, err := exec.Command("ps", "-o", "command=", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return
+	}
+	if strings.Contains(string(output), appname) {
+		err = fmt.Errorf("Running %s found with PID: %d", appname, pid)
+		return
+	}
+	os.Remove(pidFile)
+	return
 }
 
-func setPidFile(filename string) {
-	f, _ := os.Create(filename)
-	defer f.Close()
-	pid := os.Getpid()
-	f.WriteString(strconv.Itoa(pid))
-	fmt.Printf("Write PID: %d\n", pid)
-}
-
-func getPidFile(filename string) (pid int) {
-	f, _ := os.Open(filename)
+func readPidFile(pidFile string) (pid int, err error) {
+	f, _ := os.Open(pidFile)
 	defer f.Close()
 	r := bufio.NewReaderSize(f, 5)
-	line, _, _ := r.ReadLine()
-	pid, _ = strconv.Atoi(string(line))
-	return pid
+	line, _, err := r.ReadLine()
+	if err != nil {
+		return
+	}
+	pid, err = strconv.Atoi(string(line))
+	if err != nil {
+		return
+	}
+	return
+}
+
+func writePidFile(pidFile string) {
+	f, err := os.Create(pidFile)
+	defer f.Close()
+	if err == nil {
+		pid := os.Getpid()
+		f.WriteString(strconv.Itoa(pid))
+	}
 }
