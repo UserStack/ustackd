@@ -5,12 +5,12 @@ import (
 )
 
 type User struct {
-	Uid   int64
-	Email string
+	Uid  int64
+	Name string
 }
 
 func (u User) String() string {
-	return fmt.Sprintf("%s:%d", u.Email, u.Uid)
+	return fmt.Sprintf("%s:%d", u.Name, u.Uid)
 }
 
 type Group struct {
@@ -28,20 +28,20 @@ type Error struct {
 }
 
 type Abstract interface {
-	CreateUser(email string, password string) (int64, *Error)
-	DisableUser(emailuid string) *Error
-	EnableUser(emailuid string) *Error
-	SetUserData(emailuid string, key string, value string) *Error
-	GetUserData(emailuid string, key string) (string, *Error)
-	LoginUser(email string, password string) (int64, *Error)
-	ChangeUserPassword(emailuid string, password string, newpassword string) *Error
-	ChangeUserEmail(emailuid string, password string, newemail string) *Error
-	UserGroups(emailuid string) ([]Group, *Error)
-	DeleteUser(emailuid string) *Error
+	CreateUser(name string, password string) (int64, *Error)
+	DisableUser(nameuid string) *Error
+	EnableUser(nameuid string) *Error
+	SetUserData(nameuid string, key string, value string) *Error
+	GetUserData(nameuid string, key string) (string, *Error)
+	LoginUser(name string, password string) (int64, *Error)
+	ChangeUserPassword(nameuid string, password string, newpassword string) *Error
+	ChangeUserName(nameuid string, password string, newname string) *Error
+	UserGroups(nameuid string) ([]Group, *Error)
+	DeleteUser(nameuid string) *Error
 	Users() ([]User, *Error)
 	Group(name string) (int64, *Error)
-	AddUserToGroup(emailuid string, groupgid string) *Error
-	RemoveUserFromGroup(emailuid string, groupgid string) *Error
+	AddUserToGroup(nameuid string, groupgid string) *Error
+	RemoveUserFromGroup(nameuid string, groupgid string) *Error
 	DeleteGroup(groupgid string) *Error
 	Groups() ([]Group, *Error)
 	GroupUsers(groupgid string) ([]User, *Error)

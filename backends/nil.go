@@ -3,43 +3,43 @@ package backends
 type NilBackend struct {
 }
 
-func (backend *NilBackend) CreateUser(email string, password string) (int64, *Error) {
+func (backend *NilBackend) CreateUser(name string, password string) (int64, *Error) {
 	return 0, nil
 }
 
-func (backend *NilBackend) DisableUser(emailuid string) *Error {
+func (backend *NilBackend) DisableUser(nameuid string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) EnableUser(emailuid string) *Error {
+func (backend *NilBackend) EnableUser(nameuid string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) SetUserData(emailuid string, key string, value string) *Error {
+func (backend *NilBackend) SetUserData(nameuid string, key string, value string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) GetUserData(emailuid string, key string) (string, *Error) {
+func (backend *NilBackend) GetUserData(nameuid string, key string) (string, *Error) {
 	return "", nil
 }
 
-func (backend *NilBackend) LoginUser(email string, password string) (int64, *Error) {
+func (backend *NilBackend) LoginUser(name string, password string) (int64, *Error) {
 	return 0, nil
 }
 
-func (backend *NilBackend) ChangeUserPassword(emailuid string, password string, newpassword string) *Error {
+func (backend *NilBackend) ChangeUserPassword(nameuid string, password string, newpassword string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) ChangeUserEmail(emailuid string, password string, newemail string) *Error {
+func (backend *NilBackend) ChangeUserName(nameuid string, password string, newname string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) UserGroups(emailuid string) ([]Group, *Error) {
+func (backend *NilBackend) UserGroups(nameuid string) ([]Group, *Error) {
 	return nil, nil
 }
 
-func (backend *NilBackend) DeleteUser(emailuid string) *Error {
+func (backend *NilBackend) DeleteUser(nameuid string) *Error {
 	return nil
 }
 
@@ -51,11 +51,11 @@ func (backend *NilBackend) Group(name string) (int64, *Error) {
 	return 0, nil
 }
 
-func (backend *NilBackend) AddUserToGroup(emailuid string, groupgid string) *Error {
+func (backend *NilBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
 	return nil
 }
 
-func (backend *NilBackend) RemoveUserFromGroup(emailuid string, groupgid string) *Error {
+func (backend *NilBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
 	return nil
 }
 

@@ -12,15 +12,15 @@ const (
 )
 
 type SqliteBackend struct {
-	db                 *sql.DB
-	createUserStmt     *sql.Stmt
-	usersStmt          *sql.Stmt
-	deleteUserStmt     *sql.Stmt
-	loginUserStmt      *sql.Stmt
-	setUserStateStmt   *sql.Stmt
-	uidForEmailUidStmt *sql.Stmt
-	setUserDataStmt    *sql.Stmt
-	getUserDataStmt    *sql.Stmt
+	db                *sql.DB
+	createUserStmt    *sql.Stmt
+	usersStmt         *sql.Stmt
+	deleteUserStmt    *sql.Stmt
+	loginUserStmt     *sql.Stmt
+	setUserStateStmt  *sql.Stmt
+	uidForNameUidStmt *sql.Stmt
+	setUserDataStmt   *sql.Stmt
+	getUserDataStmt   *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
@@ -39,10 +39,10 @@ func (backend *SqliteBackend) init() error {
 	// initialize all tables
 	_, err = backend.db.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS Users (
 		uid INTEGER PRIMARY KEY AUTOINCREMENT,
-		email VARCHAR,
+		name VARCHAR,
 		password VARCHAR,
 		state INTEGER DEFAULT %d,
-		CONSTRAINT SingleKeys UNIQUE (email) ON CONFLICT FAIL
+		CONSTRAINT SingleKeys UNIQUE (name) ON CONFLICT FAIL
 	)`, STATUS_ACTIVE))
 	if err != nil {
 		return err
@@ -72,35 +72,35 @@ func (backend *SqliteBackend) init() error {
 		return err
 	}
 	backend.createUserStmt, err = backend.db.Prepare(`INSERT INTO Users (
-		email, password
+		name, password
 	) VALUES (
 		?, ?
 	)`)
 	if err != nil {
 		return err
 	}
-	backend.usersStmt, err = backend.db.Prepare(`SELECT email, uid FROM Users`)
+	backend.usersStmt, err = backend.db.Prepare(`SELECT name, uid FROM Users`)
 	if err != nil {
 		return err
 	}
 	backend.deleteUserStmt, err = backend.db.Prepare(`DELETE FROM Users
-		WHERE uid = ? OR email = ?`)
+		WHERE uid = ? OR name = ?`)
 	if err != nil {
 		return err
 	}
 	backend.loginUserStmt, err = backend.db.Prepare(fmt.Sprintf(
-		"SELECT uid FROM Users WHERE email = ? AND password = ? AND state = %d",
+		"SELECT uid FROM Users WHERE name = ? AND password = ? AND state = %d",
 		STATUS_ACTIVE))
 	if err != nil {
 		return err
 	}
 	backend.setUserStateStmt, err = backend.db.Prepare(`UPDATE Users
-		SET state = ? WHERE email = ? OR uid = ?`)
+		SET state = ? WHERE name = ? OR uid = ?`)
 	if err != nil {
 		return err
 	}
-	backend.uidForEmailUidStmt, err = backend.db.Prepare(`SELECT uid FROM Users
-	 	WHERE email = ? OR uid = ?`)
+	backend.uidForNameUidStmt, err = backend.db.Prepare(`SELECT uid FROM Users
+	 	WHERE name = ? OR uid = ?`)
 	if err != nil {
 		return err
 	}
@@ -120,11 +120,11 @@ func (backend *SqliteBackend) init() error {
 	return nil
 }
 
-func (backend *SqliteBackend) CreateUser(email string, password string) (int64, *Error) {
-	if email == "" || password == "" {
-		return 0, &Error{"EINVAL", "User email and password can't be blank"}
+func (backend *SqliteBackend) CreateUser(name string, password string) (int64, *Error) {
+	if name == "" || password == "" {
+		return 0, &Error{"EINVAL", "User name and password can't be blank"}
 	}
-	result, err := backend.createUserStmt.Exec(email, password)
+	result, err := backend.createUserStmt.Exec(name, password)
 	if err != nil {
 		return 0, &Error{"EEXIST", err.Error()}
 	}
@@ -137,19 +137,19 @@ func (backend *SqliteBackend) CreateUser(email string, password string) (int64, 
 	}
 }
 
-func (backend *SqliteBackend) DisableUser(emailuid string) *Error {
-	return backend.setUserState(STATUS_INACTIVE, emailuid)
+func (backend *SqliteBackend) DisableUser(nameuid string) *Error {
+	return backend.setUserState(STATUS_INACTIVE, nameuid)
 }
 
-func (backend *SqliteBackend) EnableUser(emailuid string) *Error {
-	return backend.setUserState(STATUS_ACTIVE, emailuid)
+func (backend *SqliteBackend) EnableUser(nameuid string) *Error {
+	return backend.setUserState(STATUS_ACTIVE, nameuid)
 }
 
-func (backend *SqliteBackend) SetUserData(emailuid string, key string, value string) *Error {
-	if emailuid == "" || key == "" || value == "" {
-		return &Error{"EINVAL", "Email/uid, key and value can't be blank"}
+func (backend *SqliteBackend) SetUserData(nameuid string, key string, value string) *Error {
+	if nameuid == "" || key == "" || value == "" {
+		return &Error{"EINVAL", "Name/uid, key and value can't be blank"}
 	}
-	uid, err := backend.getUidForEmailUid(emailuid)
+	uid, err := backend.getUidForNameUid(nameuid)
 	if err != nil {
 		return err
 	}
@@ -160,11 +160,11 @@ func (backend *SqliteBackend) SetUserData(emailuid string, key string, value str
 	return nil
 }
 
-func (backend *SqliteBackend) GetUserData(emailuid string, key string) (string, *Error) {
-	if emailuid == "" || key == "" {
-		return "", &Error{"EINVAL", "Email/uid, key and value can't be blank"}
+func (backend *SqliteBackend) GetUserData(nameuid string, key string) (string, *Error) {
+	if nameuid == "" || key == "" {
+		return "", &Error{"EINVAL", "Name/uid, key and value can't be blank"}
 	}
-	uid, err := backend.getUidForEmailUid(emailuid)
+	uid, err := backend.getUidForNameUid(nameuid)
 	if err != nil {
 		return "", err
 	}
@@ -183,17 +183,17 @@ func (backend *SqliteBackend) GetUserData(emailuid string, key string) (string, 
 	return "", &Error{"ENOENT", "Key unknown"}
 }
 
-func (backend *SqliteBackend) LoginUser(email string, password string) (int64, *Error) {
-	if email == "" || password == "" {
+func (backend *SqliteBackend) LoginUser(name string, password string) (int64, *Error) {
+	if name == "" || password == "" {
 		return 0, &Error{"EINVAL", "Username and password can't be blank"}
 	}
-	rows, err := backend.loginUserStmt.Query(email, password)
+	rows, err := backend.loginUserStmt.Query(name, password)
 	defer rows.Close()
 	if err != nil {
 		return 0, &Error{"EFAULT", err.Error()}
 	}
 	if !rows.Next() {
-		return 0, &Error{"ENOENT", "Email unknown"}
+		return 0, &Error{"ENOENT", "Name unknown"}
 	}
 	var uid int64
 	serr := rows.Scan(&uid)
@@ -203,24 +203,24 @@ func (backend *SqliteBackend) LoginUser(email string, password string) (int64, *
 	return uid, nil
 }
 
-func (backend *SqliteBackend) ChangeUserPassword(emailuid string, password string, newpassword string) *Error {
+func (backend *SqliteBackend) ChangeUserPassword(nameuid string, password string, newpassword string) *Error {
 	return nil
 }
 
-func (backend *SqliteBackend) ChangeUserEmail(emailuid string, password string, newemail string) *Error {
+func (backend *SqliteBackend) ChangeUserName(nameuid string, password string, newname string) *Error {
 	return nil
 }
 
-func (backend *SqliteBackend) UserGroups(emailuid string) ([]Group, *Error) {
+func (backend *SqliteBackend) UserGroups(nameuid string) ([]Group, *Error) {
 	return nil, nil
 }
 
-func (backend *SqliteBackend) DeleteUser(emailuid string) *Error {
-	if emailuid == "" {
-		return &Error{"EINVAL", "Email or uid has to be passed"}
+func (backend *SqliteBackend) DeleteUser(nameuid string) *Error {
+	if nameuid == "" {
+		return &Error{"EINVAL", "Name or uid has to be passed"}
 	}
 
-	result, err := backend.deleteUserStmt.Exec(emailuid, emailuid)
+	result, err := backend.deleteUserStmt.Exec(nameuid, nameuid)
 	if err != nil {
 		return &Error{"EFAULT", err.Error()}
 	}
@@ -230,7 +230,7 @@ func (backend *SqliteBackend) DeleteUser(emailuid string) *Error {
 	}
 
 	if count < 1 {
-		return &Error{"ENOENT", "Email or uid unknown"}
+		return &Error{"ENOENT", "Name or uid unknown"}
 	}
 	return nil
 }
@@ -244,12 +244,12 @@ func (backend *SqliteBackend) Users() ([]User, *Error) {
 	}
 	for rows.Next() {
 		var uid int64
-		var email string
-		err = rows.Scan(&email, &uid)
+		var name string
+		err = rows.Scan(&name, &uid)
 		if err != nil {
 			return nil, &Error{"EFAULT", err.Error()}
 		}
-		users = append(users, User{uid, email})
+		users = append(users, User{uid, name})
 	}
 	return users, nil
 }
@@ -258,11 +258,11 @@ func (backend *SqliteBackend) Group(name string) (int64, *Error) {
 	return 0, nil
 }
 
-func (backend *SqliteBackend) AddUserToGroup(emailuid string, groupgid string) *Error {
+func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
 	return nil
 }
 
-func (backend *SqliteBackend) RemoveUserFromGroup(emailuid string, groupgid string) *Error {
+func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
 	return nil
 }
 
@@ -282,14 +282,14 @@ func (backend *SqliteBackend) Close() {
 	backend.db.Close()
 }
 
-func (backend *SqliteBackend) getUidForEmailUid(emailuid string) (int64, *Error) {
-	rows, err := backend.uidForEmailUidStmt.Query(emailuid, emailuid)
+func (backend *SqliteBackend) getUidForNameUid(nameuid string) (int64, *Error) {
+	rows, err := backend.uidForNameUidStmt.Query(nameuid, nameuid)
 	defer rows.Close()
 	if err != nil {
 		return 0, &Error{"EFAULT", err.Error()}
 	}
 	if !rows.Next() {
-		return 0, &Error{"ENOENT", "Email unknown"}
+		return 0, &Error{"ENOENT", "Name unknown"}
 	}
 	var uid int64
 	serr := rows.Scan(&uid)
@@ -299,11 +299,11 @@ func (backend *SqliteBackend) getUidForEmailUid(emailuid string) (int64, *Error)
 	return uid, nil
 }
 
-func (backend *SqliteBackend) setUserState(state int, emailuid string) *Error {
-	if emailuid == "" {
-		return &Error{"EINVAL", "User email or uid must be given"}
+func (backend *SqliteBackend) setUserState(state int, nameuid string) *Error {
+	if nameuid == "" {
+		return &Error{"EINVAL", "User name or uid must be given"}
 	}
-	result, err := backend.setUserStateStmt.Exec(state, emailuid, emailuid)
+	result, err := backend.setUserStateStmt.Exec(state, nameuid, nameuid)
 	if err != nil {
 		return &Error{"EFAULT", err.Error()}
 	}
@@ -312,7 +312,7 @@ func (backend *SqliteBackend) setUserState(state int, emailuid string) *Error {
 		return &Error{"EFAULT", err.Error()}
 	}
 	if n == 0 {
-		return &Error{"ENOENT", "User email"}
+		return &Error{"ENOENT", "User name"}
 	}
 	return nil
 }

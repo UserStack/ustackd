@@ -29,7 +29,7 @@ func TestCreateUser(t *testing.T) {
 		t.Fatal("should return EINVAL instead of", berr3.Code)
 	}
 
-	// ... or email
+	// ... or name
 	_, berr4 := backend.CreateUser("", "secret")
 	if berr4.Code != "EINVAL" {
 		t.Fatal("should return EINVAL instead of", berr4.Code)
@@ -103,7 +103,7 @@ func TestSetGetUserData(t *testing.T) {
 
 	intval := backend.SetUserData("", "firstname", "Tester")
 	if intval.Code != "EINVAL" {
-		t.Fatal("should fail to set value on non invalid email", intval.Code)
+		t.Fatal("should fail to set value on non invalid name", intval.Code)
 	}
 
 	intval1 := backend.SetUserData("test@example.com", "", "Tester")
@@ -164,15 +164,15 @@ func TestLoginUser(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) ChangeUserPassword(emailuid string, password string, newpassword string) *Error {
+// func (backend *SqliteBackend) ChangeUserPassword(nameuid string, password string, newpassword string) *Error {
 //     return nil
 // }
 //
-// func (backend *SqliteBackend) ChangeUserEmail(emailuid string, password string, newemail string) *Error {
+// func (backend *SqliteBackend) ChangeUserName(nameuid string, password string, newname string) *Error {
 //     return nil
 // }
 //
-// func (backend *SqliteBackend) UserGroups(emailuid string) ([]Group, *Error) {
+// func (backend *SqliteBackend) UserGroups(nameuid string) ([]Group, *Error) {
 //     return nil, nil
 // }
 
@@ -198,7 +198,7 @@ func TestDeleteUser(t *testing.T) {
 		t.Fatal("user count should have been 2 but was", len(users))
 	}
 
-	// delete one using email
+	// delete one using name
 	backend.DeleteUser("test1@example.com")
 	users, _ = backend.Users()
 	if len(users) != 1 {
@@ -213,7 +213,7 @@ func TestDeleteUser(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) DeleteUser(emailuid string) *Error {
+// func (backend *SqliteBackend) DeleteUser(nameuid string) *Error {
 //     return nil
 // }
 
@@ -240,11 +240,11 @@ func TestUsers(t *testing.T) {
 	if len(users) != 1 {
 		t.Fatal("users should be empty and is ", len(users))
 	}
-	if users[0].Email != "test@example.com" {
-		t.Fatal("email should have been 'test@example.com' but was", users[0].Email)
+	if users[0].Name != "test@example.com" {
+		t.Fatal("name should have been 'test@example.com' but was", users[0].Name)
 	}
 	if users[0].Uid != 1 {
-		t.Fatal("email should have been 1 but was", users[0].Uid)
+		t.Fatal("name should have been 1 but was", users[0].Uid)
 	}
 }
 
@@ -256,11 +256,11 @@ func TestUsers(t *testing.T) {
 //     return 0, nil
 // }
 //
-// func (backend *SqliteBackend) AddUserToGroup(emailuid string, groupgid string) *Error {
+// func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
 //     return nil
 // }
 //
-// func (backend *SqliteBackend) RemoveUserFromGroup(emailuid string, groupgid string) *Error {
+// func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
 //     return nil
 // }
 //

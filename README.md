@@ -50,7 +50,7 @@ This section describes the configuration of the ustackd.
     auth = 42421da75756d69832d:deny://
         
     # client that is restricted to certain commands (e.g. auth server)
-    auth = 6d95e4ac638daf4b786:allow:/^(login|set|get|change (password|email))/
+    auth = 6d95e4ac638daf4b786:allow:/^(login|set|get|change (password|name))/
     
     # client that can manage everything, but is secure from data stealing
     auth = 04d6eb93ab5d30f7bb0:deny:/^(users|groups|group users)/
@@ -110,7 +110,7 @@ locations in order:
         * uid (int)
         * firstname (string)
         * lastname (string)
-        * email (string)
+        * name (string)
         * password (string)
         * active (bool)
         has many Groups
@@ -209,7 +209,7 @@ Return Codes:
 
 *Capability:* (user)
 
-    -> user <email> <password>
+    -> user <name> <password>
     <- + OK 1
 
 Return Codes:
@@ -222,37 +222,37 @@ Return Codes:
 
 *Capability:* (user)
 
-    -> disable <email|uid>
+    -> disable <name|uid>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email or uid unknown
+    ENOENT: name or uid unknown
 
 #### Enable user
 
 *Capability:* (user)
 
-    -> enable <email|uid>
+    -> enable <name|uid>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email or uid unknown
+    ENOENT: name or uid unknown
 
 #### Store data on the user object
 
 *Capability:* (user)
 
-    -> set <email|uid> <key> <value>
+    -> set <name|uid> <key> <value>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email or uid unknown
+    ENOENT: name or uid unknown
     EINVAL: Parameter missing or invalid
 
 Recommended Keys:
@@ -264,61 +264,61 @@ Recommended Keys:
 
 *Capability:* (user)
 
-    -> get <email,uid> <key>
+    -> get <name,uid> <key>
     <- <value>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email, uid or key unknown
+    ENOENT: name, uid or key unknown
     EINVAL: Parameter missing or invalid
 
 #### Login
 
 *Capability:* (user)
 
-    -> login <email> <password>
+    -> login <name> <password>
     <- + OK 1
 
 Return Codes:
 
     OK: Ok with the uid
-    EPERM: email and password are not a valid combination
+    EPERM: name and password are not a valid combination
 
 #### Change password
 
 *Capability:* (user)
 
-    -> change password <email|uid> <password> <newpassword>
+    -> change password <name|uid> <password> <newpassword>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email or uid unknown
-    EPERM: email and password are not a valid combination
+    ENOENT: name or uid unknown
+    EPERM: name and password are not a valid combination
     EINVAL: Parameter missing or invalid
 
-#### Change email
+#### Change name
 
 *Capability:* (user)
 
-    -> change email <email|uid> <password> <newemail>
+    -> change name <name|uid> <password> <newname>
     <- + OK
 
 Return Codes:
 
     OK: Ok
-    ENOENT: email or uid unknown
-    EPERM: email and password are not a valid combination
+    ENOENT: name or uid unknown
+    EPERM: name and password are not a valid combination
     EINVAL: Parameter missing or invalid
 
 #### List all groups of a user
 
 *Capability:* (user group)
 
-    -> user groups <email|uid>
+    -> user groups <name|uid>
     <- administrators:1
     <- sales:20
     <- engineering:10
@@ -331,19 +331,19 @@ Format:
 Return Codes:
 
     OK: Ok with the list of objects
-    ENOENT: email or uid unknown
+    ENOENT: name or uid unknown
     EINVAL: Parameter missing or invalid
     
 #### Delete user
 
 *Capability:* (user)
 
-    delete user <email|uid>
+    delete user <name|uid>
 
 Return Codes:
 
     OK: Ok user deleted
-    ENOENT: email or uid unknown
+    ENOENT: name or uid unknown
     EINVAL: Parameter missing or invalid
     
 #### All users
@@ -358,7 +358,7 @@ Return Codes:
 
 Format:
 
-    List of emails with user id: <email>:<uid>
+    List of names with user id: <name>:<uid>
 
 Return Codes:
 
@@ -383,7 +383,7 @@ Return Codes:
 
 *Capability:* (user group)
 
-    -> add <email|uid> <group|gid>
+    -> add <name|uid> <group|gid>
     <- + OK
 
 Return Codes:
@@ -395,7 +395,7 @@ Return Codes:
 
 *Capability:* (user group)
 
-    -> remove <email|uid> <group|gid>
+    -> remove <name|uid> <group|gid>
     <- + OK
 
 Return Codes:
@@ -445,7 +445,7 @@ Return Codes:
 
 Format:
 
-    List of emails with user id: <email>:<uid>
+    List of names with user id: <name>:<uid>
 
 Return Codes:
 

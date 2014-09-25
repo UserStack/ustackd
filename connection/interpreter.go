@@ -27,8 +27,8 @@ func (ip *Interpreter) parse(line string) {
 		ip.get(line[4:])
 	} else if strings.HasPrefix(line, "change password ") {
 		ip.changePassword(line[:16])
-	} else if strings.HasPrefix(line, "change email ") {
-		ip.changeEmail(line[:13])
+	} else if strings.HasPrefix(line, "change name ") {
+		ip.changeName(line[:13])
 	} else if strings.HasPrefix(line, "user groups ") {
 		ip.userGroups(line[:12])
 	} else if strings.HasPrefix(line, "user ") {
@@ -69,7 +69,7 @@ func (ip *Interpreter) clientAuth(passwd string) {
 	}
 }
 
-// login <email> <password>
+// login <name> <password>
 func (ip *Interpreter) login(line string) {
 	ip.withArgs(line, 2, func(args []string) {
 		uid, err := ip.Backend.LoginUser(args[0], args[1])
@@ -77,17 +77,17 @@ func (ip *Interpreter) login(line string) {
 	})
 }
 
-// disable <email|uid>
-func (ip *Interpreter) disable(emailuid string) {
-	ip.simpleResponder(ip.Backend.DisableUser(emailuid))
+// disable <name|uid>
+func (ip *Interpreter) disable(nameuid string) {
+	ip.simpleResponder(ip.Backend.DisableUser(nameuid))
 }
 
-// enable <email|uid>
-func (ip *Interpreter) enable(emailuid string) {
-	ip.simpleResponder(ip.Backend.EnableUser(emailuid))
+// enable <name|uid>
+func (ip *Interpreter) enable(nameuid string) {
+	ip.simpleResponder(ip.Backend.EnableUser(nameuid))
 }
 
-// set <email|uid> <key> <value>
+// set <name|uid> <key> <value>
 func (ip *Interpreter) set(line string) {
 	ip.withArgs(line, 3, func(args []string) {
 		ip.simpleResponder(
@@ -95,7 +95,7 @@ func (ip *Interpreter) set(line string) {
 	})
 }
 
-// get <email|uid> <key>
+// get <name|uid> <key>
 func (ip *Interpreter) get(line string) {
 	ip.withArgs(line, 2, func(args []string) {
 		val, err := ip.Backend.GetUserData(args[0], args[1])
@@ -106,7 +106,7 @@ func (ip *Interpreter) get(line string) {
 	})
 }
 
-// change password <email|uid> <password> <newpassword>
+// change password <name|uid> <password> <newpassword>
 func (ip *Interpreter) changePassword(line string) {
 	ip.withArgs(line, 3, func(args []string) {
 		ip.simpleResponder(
@@ -114,21 +114,21 @@ func (ip *Interpreter) changePassword(line string) {
 	})
 }
 
-// change email <email|uid> <password> <newemail>
-func (ip *Interpreter) changeEmail(line string) {
+// change name <name|uid> <password> <newname>
+func (ip *Interpreter) changeName(line string) {
 	ip.withArgs(line, 3, func(args []string) {
 		ip.simpleResponder(
-			ip.Backend.ChangeUserEmail(args[0], args[1], args[2]))
+			ip.Backend.ChangeUserName(args[0], args[1], args[2]))
 	})
 }
 
-// user groups <email|uid>
-func (ip *Interpreter) userGroups(emailuid string) {
-	items, err := ip.Backend.UserGroups(emailuid)
+// user groups <name|uid>
+func (ip *Interpreter) userGroups(nameuid string) {
+	items, err := ip.Backend.UserGroups(nameuid)
 	ip.groupResponder(items, err)
 }
 
-// user <email> <password>
+// user <name> <password>
 func (ip *Interpreter) user(line string) {
 	ip.withArgs(line, 2, func(args []string) {
 		uid, err := ip.Backend.CreateUser(args[0], args[1])
@@ -136,9 +136,9 @@ func (ip *Interpreter) user(line string) {
 	})
 }
 
-// delete user <email|uid>
-func (ip *Interpreter) deleteUser(emailuid string) {
-	ip.simpleResponder(ip.Backend.DeleteUser(emailuid))
+// delete user <name|uid>
+func (ip *Interpreter) deleteUser(nameuid string) {
+	ip.simpleResponder(ip.Backend.DeleteUser(nameuid))
 }
 
 // users
@@ -147,14 +147,14 @@ func (ip *Interpreter) users(line string) {
 	ip.userResponder(items, err)
 }
 
-// add <email|uid> to <group|gid>
+// add <name|uid> to <group|gid>
 func (ip *Interpreter) add(line string) {
 	ip.withArgs(line, 2, func(args []string) {
 		ip.simpleResponder(ip.Backend.AddUserToGroup(args[0], args[1]))
 	})
 }
 
-// remove <email|uid> from <group|gid>
+// remove <name|uid> from <group|gid>
 func (ip *Interpreter) remove(line string) {
 	ip.withArgs(line, 2, func(args []string) {
 		ip.simpleResponder(ip.Backend.RemoveUserFromGroup(args[0], args[1]))
