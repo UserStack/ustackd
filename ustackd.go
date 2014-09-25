@@ -53,19 +53,16 @@ func main() {
 		}
 		var backend backends.Abstract
 		server := server.Server{logger, &cfg, backend, app.Name}
-
 		if err = server.Demonize(); err != nil {
 			return
 		}
 
 		bindAddress := cfg.Daemon.Listen[0]
 		listener, err := net.Listen("tcp", bindAddress)
-
 		if err != nil {
 			logger.Printf("Unable to listen: %s\n", err)
 			return
 		}
-
 		logger.Printf("ustackd listenting on " + bindAddress + "\n")
 
 		sqlite, serr := backends.NewSqliteBackend(cfg.Sqlite.Url)
@@ -76,13 +73,13 @@ func main() {
 		}
 		backend = &sqlite
 
-		running := true
+		isRunning := true
 		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
-		go checkSignal(pidFile, &running, listener)
+		go checkSignal(pidFile, &isRunning, listener)
 
-		for running {
+		for isRunning {
 			conn, err := listener.Accept()
-			if err != nil && running {
+			if err != nil && isRunning {
 				logger.Printf("Can't accept connection: %s\n", err)
 				continue
 			}
@@ -94,11 +91,11 @@ func main() {
 	app.Run(os.Args)
 }
 
-func checkSignal(pidfile string, running *bool, listener net.Listener) {
+func checkSignal(pidfile string, isRunning *bool, listener net.Listener) {
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, os.Kill)
 	<-channel //Block until a signal is received
 	os.Remove(pidfile)
-	*running = false
+	*isRunning = false
 	listener.Close()
 }
