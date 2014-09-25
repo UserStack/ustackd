@@ -74,7 +74,13 @@ func main() {
 
 		logger.Printf("ustackd listenting on " + bindAddress + "\n")
 		var backend backends.Abstract
-		backend = new(backends.NilBackend)
+		sqlite, serr := backends.NewSqliteBackend(cfg.Sqlite.Url)
+		if serr != nil {
+			logger.Printf("Unable to open sqlite at %s: %s\n",
+							cfg.Sqlite.Url, serr)
+			return
+		}
+		backend = &sqlite
 
 		server := server.Server{logger, &cfg, backend}
 		running := true

@@ -24,3 +24,5 @@ _testmain.go
 *.prof
 
 ustackd
+ustack.db
+ustackd.pid

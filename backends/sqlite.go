@@ -12,15 +12,15 @@ const (
 )
 
 type SqliteBackend struct {
-	db                *sql.DB
-	createUserStmt    *sql.Stmt
-	usersStmt         *sql.Stmt
-	deleteUserStmt    *sql.Stmt
-	loginUserStmt     *sql.Stmt
-	setUserStateStmt  *sql.Stmt
+	db                 *sql.DB
+	createUserStmt     *sql.Stmt
+	usersStmt          *sql.Stmt
+	deleteUserStmt     *sql.Stmt
+	loginUserStmt      *sql.Stmt
+	setUserStateStmt   *sql.Stmt
 	uidForNameUidStmt *sql.Stmt
-	setUserDataStmt   *sql.Stmt
-	getUserDataStmt   *sql.Stmt
+	setUserDataStmt    *sql.Stmt
+	getUserDataStmt    *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
