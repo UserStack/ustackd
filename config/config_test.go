@@ -20,7 +20,7 @@ func TestRead(t *testing.T) {
 		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", "./", false},
 		Syslog{3, "Debug"},
 		ClientAuth{[]Auth{}},
-		Security{nilString, nilString, nilString},
+		Security{nilString, nilString},
 		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
 		Sqlite{"ustack.db"},
 	}
@@ -49,7 +49,6 @@ func TestReadAll(t *testing.T) {
 		},
 		Security{
 			"/var/run/ustackd",
-			"ustack",
 			"ustack",
 		},
 		Ssl{

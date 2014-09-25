@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"os/user"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/config"
@@ -52,6 +54,14 @@ func main() {
 
 			if err != nil {
 				fmt.Printf("Unable to connect to syslog: %s\n", err)
+				return
+			}
+		}
+
+		uid := cfg.Security.Uid
+		if uid != "" {
+			if err = dropPrivileges(uid, logger); err != nil {
+				logger.Println(err)
 				return
 			}
 		}
@@ -98,6 +108,52 @@ func main() {
 	}
 
 	app.Run(os.Args)
+}
+
+func dropPrivileges(username string, logger *log.Logger) (err error) {
+	usr, err := user.Lookup(username)
+	if err != nil {
+		return
+	}
+	if usr == nil {
+		return fmt.Errorf("User %s does not exist on system.", username)
+	}
+	uid, err := strconv.Atoi(usr.Uid)
+	if err != nil {
+		return
+	}
+	gid, err := strconv.Atoi(usr.Gid)
+	if err != nil {
+		return
+	}
+
+	if syscall.Getuid() == 0 {
+		_, err = syscall.Getgroups()
+		if err != nil {
+			return
+		}
+		err = syscall.Setgroups([]int{gid})
+		if err != nil {
+			return
+		}
+		_, err = syscall.Getgroups()
+		if err != nil {
+			return
+		}
+		err = syscall.Setregid(gid, gid)
+		if err != nil {
+			return
+		}
+		err = syscall.Setreuid(uid, uid)
+		if err != nil {
+			return
+		}
+
+		if syscall.Getuid() != 0 {
+			logger.Println("Privileges succesfully dropped.")
+		}
+	}
+	return
 }
 
 func checkSignal(pidfile string, running *bool, listener net.Listener) {

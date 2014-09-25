@@ -58,11 +58,10 @@ This section describes the configuration of the ustackd.
     [security]
     # change root to this location after start
     ; chroot = /var/run/ustackd
-    
-    # change group to this location after start
-    ; gid = ustack
-    
+        
     # change user to this location after start
+    # the same is used for the gid, so you need to have the user only in one group
+    # with the same name
     ; uid = ustack
     
     [ssl]

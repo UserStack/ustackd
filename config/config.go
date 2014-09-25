@@ -49,7 +49,7 @@ type Auth struct {
 }
 
 type Security struct {
-	Chroot, Gid, Uid string
+	Chroot, Uid string
 }
 
 type Ssl struct {
