@@ -10,4 +10,5 @@ type Server struct {
 	Logger  *log.Logger
 	Cfg     *config.Config
 	Backend backends.Abstract
+	AppName string
 }

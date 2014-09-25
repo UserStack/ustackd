@@ -1,18 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"log/syslog"
 	"net"
 	"os"
-	"os/exec"
 	"os/signal"
-	"os/user"
-	"strconv"
-	"strings"
-	"syscall"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/config"
@@ -57,22 +51,12 @@ func main() {
 				return
 			}
 		}
+		var backend backends.Abstract
+		server := server.Server{logger, &cfg, backend, app.Name}
 
-		uid := cfg.Security.Uid
-		if uid != "" {
-			if err = dropPrivileges(uid, logger); err != nil {
-				logger.Println(err)
-				return
-			}
-		}
-
-		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
-		err = checkPidFile(pidFile, app.Name)
-		if err != nil {
-			logger.Println(err.Error())
+		if err = server.Demonize(); err != nil {
 			return
 		}
-		writePidFile(pidFile)
 
 		bindAddress := cfg.Daemon.Listen[0]
 		listener, err := net.Listen("tcp", bindAddress)
@@ -83,17 +67,17 @@ func main() {
 		}
 
 		logger.Printf("ustackd listenting on " + bindAddress + "\n")
-		var backend backends.Abstract
+
 		sqlite, serr := backends.NewSqliteBackend(cfg.Sqlite.Url)
 		if serr != nil {
 			logger.Printf("Unable to open sqlite at %s: %s\n",
-							cfg.Sqlite.Url, serr)
+				cfg.Sqlite.Url, serr)
 			return
 		}
 		backend = &sqlite
 
-		server := server.Server{logger, &cfg, backend}
 		running := true
+		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
 		go checkSignal(pidFile, &running, listener)
 
 		for running {
@@ -110,52 +94,6 @@ func main() {
 	app.Run(os.Args)
 }
 
-func dropPrivileges(username string, logger *log.Logger) (err error) {
-	usr, err := user.Lookup(username)
-	if err != nil {
-		return
-	}
-	if usr == nil {
-		return fmt.Errorf("User %s does not exist on system.", username)
-	}
-	uid, err := strconv.Atoi(usr.Uid)
-	if err != nil {
-		return
-	}
-	gid, err := strconv.Atoi(usr.Gid)
-	if err != nil {
-		return
-	}
-
-	if syscall.Getuid() == 0 {
-		_, err = syscall.Getgroups()
-		if err != nil {
-			return
-		}
-		err = syscall.Setgroups([]int{gid})
-		if err != nil {
-			return
-		}
-		_, err = syscall.Getgroups()
-		if err != nil {
-			return
-		}
-		err = syscall.Setregid(gid, gid)
-		if err != nil {
-			return
-		}
-		err = syscall.Setreuid(uid, uid)
-		if err != nil {
-			return
-		}
-
-		if syscall.Getuid() != 0 {
-			logger.Println("Privileges succesfully dropped.")
-		}
-	}
-	return
-}
-
 func checkSignal(pidfile string, running *bool, listener net.Listener) {
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, os.Kill)
@@ -163,48 +101,4 @@ func checkSignal(pidfile string, running *bool, listener net.Listener) {
 	os.Remove(pidfile)
 	*running = false
 	listener.Close()
-}
-
-func checkPidFile(pidFile, appname string) (err error) {
-	if _, ferr := os.Stat(pidFile); ferr != nil {
-		return
-	}
-	pid, err := readPidFile(pidFile)
-	if err != nil {
-		return
-	}
-	output, err := exec.Command("ps", "-o", "command=", strconv.Itoa(pid)).Output()
-	if err != nil {
-		return
-	}
-	if strings.Contains(string(output), appname) {
-		err = fmt.Errorf("Running %s found with PID: %d", appname, pid)
-		return
-	}
-	os.Remove(pidFile)
-	return
-}
-
-func readPidFile(pidFile string) (pid int, err error) {
-	file, err := os.Open(pidFile)
-	defer file.Close()
-	if err != nil {
-		return
-	}
-	reader := bufio.NewReaderSize(file, 5)
-	line, _, err := reader.ReadLine()
-	if err != nil {
-		return
-	}
-	pid, err = strconv.Atoi(string(line))
-	return
-}
-
-func writePidFile(pidFile string) {
-	file, err := os.Create(pidFile)
-	defer file.Close()
-	if err == nil {
-		pid := os.Getpid()
-		file.WriteString(strconv.Itoa(pid))
-	}
 }

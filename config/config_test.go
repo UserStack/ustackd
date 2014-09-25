@@ -22,7 +22,7 @@ func TestRead(t *testing.T) {
 		ClientAuth{[]Auth{}},
 		Security{nilString, nilString},
 		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
-		Sqlite{"ustack.db"},
+		Sqlite{"./ustack.db"},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
