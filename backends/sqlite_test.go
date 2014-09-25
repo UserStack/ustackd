@@ -36,10 +36,44 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) DisableUser(emailuid string) *Error {
-//     return nil
-// }
-//
+func TestEnableDisableUser(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	// it rejects invalid calls
+	inval := backend.DisableUser("")
+	if inval.Code != "EINVAL" {
+		t.Fatal("should return EINVAL instead of", inval.Code)
+	}
+
+	// fails to disable unknown user
+	enoent := backend.DisableUser("test@example.com")
+	if enoent.Code != "ENOENT" {
+		t.Fatal("should fail to disable unkown user with code ENOENT but was",
+			enoent.Code)
+	}
+
+	// create a user and check he can't login after he was disabled
+	backend.CreateUser("test@example.com", "secret")
+	_ = backend.DisableUser("test@example.com")
+	_, err := backend.LoginUser("test@example.com", "secret")
+	if err == nil {
+		t.Fatal("should fail to login a user")
+	}
+
+	backend.EnableUser("test@example.com")
+	uid, err := backend.LoginUser("test@example.com", "secret")
+	if err != nil {
+		t.Fatal("should fail to login a user")
+	}
+	if uid != 1 {
+		t.Fatal("should have logged in the user after activation")
+	}
+}
+
 // func (backend *SqliteBackend) EnableUser(emailuid string) *Error {
 //     return nil
 // }

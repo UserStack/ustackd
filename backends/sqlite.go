@@ -2,15 +2,22 @@ package backends
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	STATUS_ACTIVE   = 1
+	STATUS_INACTIVE = 0
+)
+
 type SqliteBackend struct {
-	db             *sql.DB
-	createUserStmt *sql.Stmt
-	usersStmt      *sql.Stmt
-	deleteUserStmt *sql.Stmt
-	loginUserStmt  *sql.Stmt
+	db               *sql.DB
+	createUserStmt   *sql.Stmt
+	usersStmt        *sql.Stmt
+	deleteUserStmt   *sql.Stmt
+	loginUserStmt    *sql.Stmt
+	setUserStateStmt *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
@@ -27,12 +34,13 @@ func NewSqliteBackend(url string) (SqliteBackend, error) {
 func (backend *SqliteBackend) init() error {
 	var err error
 	// initialize all tables
-	_, err = backend.db.Exec(`CREATE TABLE IF NOT EXISTS Users (
+	_, err = backend.db.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS Users (
 		uid INTEGER PRIMARY KEY AUTOINCREMENT,
 		email VARCHAR,
 		password VARCHAR,
+		state INTEGER DEFAULT %d,
 		CONSTRAINT SingleKeys UNIQUE (email) ON CONFLICT FAIL
-	)`)
+	)`, STATUS_ACTIVE))
 	if err != nil {
 		return err
 	}
@@ -77,8 +85,14 @@ func (backend *SqliteBackend) init() error {
 	if err != nil {
 		return err
 	}
-	backend.loginUserStmt, err = backend.db.Prepare(`SELECT uid FROM Users
-		WHERE email = ? AND password = ?`)
+	backend.loginUserStmt, err = backend.db.Prepare(fmt.Sprintf(
+		"SELECT uid FROM Users WHERE email = ? AND password = ? AND state = %d",
+		STATUS_ACTIVE))
+	if err != nil {
+		return err
+	}
+	backend.setUserStateStmt, err = backend.db.Prepare(`UPDATE Users
+		SET state = ? WHERE email = ? OR uid = ?`)
 	if err != nil {
 		return err
 	}
@@ -87,7 +101,7 @@ func (backend *SqliteBackend) init() error {
 
 func (backend *SqliteBackend) CreateUser(email string, password string) (int64, *Error) {
 	if email == "" || password == "" {
-		return 0, &Error{"EINVAL", "Username and password can't be blank"}
+		return 0, &Error{"EINVAL", "User email and password can't be blank"}
 	}
 	result, err := backend.createUserStmt.Exec(email, password)
 	if err != nil {
@@ -103,11 +117,11 @@ func (backend *SqliteBackend) CreateUser(email string, password string) (int64, 
 }
 
 func (backend *SqliteBackend) DisableUser(emailuid string) *Error {
-	return nil
+	return backend.setUserState(STATUS_INACTIVE, emailuid)
 }
 
 func (backend *SqliteBackend) EnableUser(emailuid string) *Error {
-	return nil
+	return backend.setUserState(STATUS_ACTIVE, emailuid)
 }
 
 func (backend *SqliteBackend) SetUserData(emailuid string, key string, value string) *Error {
@@ -128,7 +142,7 @@ func (backend *SqliteBackend) LoginUser(email string, password string) (int64, *
 		return 0, &Error{"EFAULT", err.Error()}
 	}
 	if !rows.Next() {
-		return 0, &Error{"ENOENT", "User doesn't exist"}
+		return 0, &Error{"ENOENT", "Email or uid unknown"}
 	}
 	var uid int64
 	serr := rows.Scan(&uid)
@@ -165,7 +179,7 @@ func (backend *SqliteBackend) DeleteUser(emailuid string) *Error {
 	}
 
 	if count < 1 {
-		return &Error{"ENOENT", "email or uid unknown"}
+		return &Error{"ENOENT", "Email or uid unknown"}
 	}
 	return nil
 }
@@ -215,4 +229,22 @@ func (backend *SqliteBackend) GroupUsers(groupgid string) ([]User, *Error) {
 
 func (backend *SqliteBackend) Close() {
 	backend.db.Close()
+}
+
+func (backend *SqliteBackend) setUserState(state int, emailuid string) *Error {
+	if emailuid == "" {
+		return &Error{"EINVAL", "User email or uid must be given"}
+	}
+	result, err := backend.setUserStateStmt.Exec(state, emailuid, emailuid)
+	if err != nil {
+		return &Error{"EFAULT", err.Error()}
+	}
+	n, aerr := result.RowsAffected()
+	if aerr != nil {
+		return &Error{"EFAULT", err.Error()}
+	}
+	if n == 0 {
+		return &Error{"ENOENT", "User email"}
+	}
+	return nil
 }
