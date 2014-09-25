@@ -10,6 +10,7 @@ type SqliteBackend struct {
 	createUserStmt *sql.Stmt
 	usersStmt      *sql.Stmt
 	deleteUserStmt *sql.Stmt
+	loginUserStmt  *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
@@ -76,14 +77,19 @@ func (backend *SqliteBackend) init() error {
 	if err != nil {
 		return err
 	}
+	backend.loginUserStmt, err = backend.db.Prepare(`SELECT uid FROM Users
+		WHERE email = ? AND password = ?`)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (backend *SqliteBackend) CreateUser(email string, password string) (int64, *Error) {
-	result, err := backend.createUserStmt.Exec(email, password)
 	if email == "" || password == "" {
 		return 0, &Error{"EINVAL", "Username and password can't be blank"}
 	}
+	result, err := backend.createUserStmt.Exec(email, password)
 	if err != nil {
 		return 0, &Error{"EEXIST", err.Error()}
 	}
@@ -113,7 +119,23 @@ func (backend *SqliteBackend) GetUserData(emailuid string, key string) *Error {
 }
 
 func (backend *SqliteBackend) LoginUser(email string, password string) (int64, *Error) {
-	return 0, nil
+	if email == "" || password == "" {
+		return 0, &Error{"EINVAL", "Username and password can't be blank"}
+	}
+	rows, err := backend.loginUserStmt.Query(email, password)
+	defer rows.Close()
+	if err != nil {
+		return 0, &Error{"EFAULT", err.Error()}
+	}
+	if !rows.Next() {
+		return 0, &Error{"ENOENT", "User doesn't exist"}
+	}
+	var uid int64
+	serr := rows.Scan(&uid)
+	if serr != nil {
+		return 0, &Error{"EFAULT", err.Error()}
+	}
+	return uid, nil
 }
 
 func (backend *SqliteBackend) ChangeUserPassword(emailuid string, password string, newpassword string) *Error {

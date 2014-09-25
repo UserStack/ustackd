@@ -51,11 +51,37 @@ func TestCreateUser(t *testing.T) {
 // func (backend *SqliteBackend) GetUserData(emailuid string, key string) *Error {
 //     return nil
 // }
-//
-// func (backend *SqliteBackend) LoginUser(email string, password string) (int, *Error) {
-//     return 0, nil
-// }
-//
+
+func TestLoginUser(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	_, err := backend.LoginUser("", "secret")
+	if err.Code != "EINVAL" {
+		t.Fatal("should have detected a blank username", err.Code)
+	}
+
+	_, err1 := backend.LoginUser("test0@example.com", "")
+	if err1.Code != "EINVAL" {
+		t.Fatal("should have detected a blank password", err1.Code)
+	}
+
+	_, err2 := backend.LoginUser("test0@example.com", "secret")
+	if err2.Code != "ENOENT" {
+		t.Fatal("should have reported, that user is unknown but was", err2.Code)
+	}
+
+	uid, _ := backend.CreateUser("test@example.com", "secret")
+	uid2, _ := backend.LoginUser("test@example.com", "secret")
+	if uid != uid2 {
+		t.Fatal("should have found the same user with uid", uid,
+			"but found", uid2)
+	}
+}
+
 // func (backend *SqliteBackend) ChangeUserPassword(emailuid string, password string, newpassword string) *Error {
 //     return nil
 // }
