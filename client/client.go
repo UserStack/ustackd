@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"crypto/tls"
 
 	"github.com/UserStack/ustackd/backends"
 )
@@ -15,8 +16,8 @@ import (
 
 type Client struct {
 	mutex sync.Mutex
-	Text *textproto.Conn
-	conn net.Conn
+	Text  *textproto.Conn
+	conn  net.Conn
 }
 
 // Dial returns a new Client connected to an ustack server at addr.
@@ -43,8 +44,17 @@ func NewClient(conn net.Conn, host string) (*Client, error) {
 		text.Close()
 		return nil, fmt.Errorf("Not a ustackd server")
 	}
-	c := &Client{Text: text, conn: conn}
-	return c, nil
+	return &Client{Text: text, conn: conn}, nil
+}
+
+func (client *Client) StartTls(config *tls.Config) error {
+	_, err := client.Text.Cmd("starttls")
+	if err != nil {
+		return err
+	}
+	client.conn = tls.Client(client.conn, config)
+	client.Text = textproto.NewConn(client.conn)
+	return nil
 }
 
 func (client *Client) CreateUser(name string, password string) (int64, *backends.Error) {
@@ -161,12 +171,12 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 		if len(args) != 2 {
 			return nil, &backends.Error{"EFAULT", "expected two values: " + line}
 		}
-		uid, perr:= strconv.ParseInt(args[1], 10, 64)
+		uid, perr := strconv.ParseInt(args[1], 10, 64)
 		if perr != nil {
 			return nil, &backends.Error{"EFAULT", perr.Error()}
 		}
 		users = append(users, backends.User{
-			Uid: uid,
+			Uid:  uid,
 			Name: args[0],
 		})
 	}
@@ -197,6 +207,7 @@ func (client *Client) GroupUsers(groupgid string) ([]backends.User, *backends.Er
 }
 
 func (client *Client) Close() {
+	client.Text.Cmd("quit")
 	client.Text.Close()
 }
 

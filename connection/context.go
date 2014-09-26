@@ -2,6 +2,7 @@ package connection
 
 import (
 	"bufio"
+	"crypto/tls"
 	"net"
 	"strings"
 
@@ -64,11 +65,35 @@ func (context *Context) Handle() {
 
 	for !context.quitting {
 		line, err := context.reader.ReadString('\n')
-		line = strings.Trim(line, " \r\n")
-		context.Log("-> " + line)
 		if err != nil {
 			break // quit connection
 		}
+		line = strings.Trim(line, " \r\n")
+		if context.starttls(line) {
+			continue
+		}
+		context.Log("-> " + line)
 		interpreter.parse(line)
+	}
+}
+
+func (context Context) starttls(line string) bool {
+	if line == "starttls" && context.Cfg.Ssl.Enabled {
+		cert, err := tls.LoadX509KeyPair(context.Cfg.Ssl.Cert,
+			context.Cfg.Ssl.Key)
+		if err != nil {
+			context.Log("can't start tls session: " + err.Error())
+			context.Err("EFAULT")
+			return true
+		}
+		config := tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
+		context.conn = tls.Server(context.conn, &config)
+		context.reader = bufio.NewReader(context.conn)
+		context.writer = bufio.NewWriter(context.conn)
+		return true
+	} else {
+		return false
 	}
 }

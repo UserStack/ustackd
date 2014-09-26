@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"crypto/tls"
 )
 
 func uniquser() string {
@@ -11,10 +12,20 @@ func uniquser() string {
 }
 
 func TestConnect(t *testing.T) {
-	_, err := Dial("localhost:7654")
+	client, err := Dial("localhost:7654")
+	defer client.Close()
 	if err != nil {
 		t.Fatal("client was unable to connect to server", err)
 	}
+}
+
+func TestConnectTls(t *testing.T) {
+    client, err := Dial("localhost:7654")
+    defer client.Close()
+    if err != nil {
+        t.Fatal("client was unable to connect to server", err)
+    }
+	client.StartTls(&tls.Config{ InsecureSkipVerify: true })
 }
 
 func TestCreateUser(t *testing.T) {

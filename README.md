@@ -158,6 +158,7 @@ Proxy backend implementation connects to a different ustackd and proxies request
     
     [proxy]
     host = 127.0.0.1:7543
+    ssl = yes
 
 ### nil
 
@@ -182,8 +183,6 @@ is prefixed with a "+" otherwise with a minus, followed by the response code.
 
 ### Login
 
-*Capability:* ()
-
 If a secret is set, the client has to issue the client auth command in order
 to get access to the system. Depending on the secret the capabilities may
 change. This is useful, to for example not allow apps to list all users.
@@ -199,7 +198,9 @@ Return Codes:
 
 ### General
 
-*Capability:* (admin)
+#### Stats
+
+Return stats of the server.
 
     -> stats
     <- logins: 13435
@@ -208,13 +209,17 @@ Return Codes:
     <- inactive users: 15
     <- groups: 4
     <- + OK
-    
+
+#### Start tls/ssl
+
+Upgrades the current connection into a ssl connection.
+
+    -> starttls
+    <SSL connection from know on>
 
 ### User Commands
 
 #### Create user
-
-*Capability:* (user)
 
     -> user <name> <password>
     <- + OK 1
@@ -227,8 +232,6 @@ Return Codes:
 
 #### Disable user
 
-*Capability:* (user)
-
     -> disable <name|uid>
     <- + OK
 
@@ -239,8 +242,6 @@ Return Codes:
 
 #### Enable user
 
-*Capability:* (user)
-
     -> enable <name|uid>
     <- + OK
 
@@ -250,8 +251,6 @@ Return Codes:
     ENOENT: name or uid unknown
 
 #### Store data on the user object
-
-*Capability:* (user)
 
     -> set <name|uid> <key> <value>
     <- + OK
@@ -269,8 +268,6 @@ Recommended Keys:
 
 #### Get stored user object data
 
-*Capability:* (user)
-
     -> get <name,uid> <key>
     <- <value>
     <- + OK
@@ -283,8 +280,6 @@ Return Codes:
 
 #### Login
 
-*Capability:* (user)
-
     -> login <name> <password>
     <- + OK 1
 
@@ -294,8 +289,6 @@ Return Codes:
     EPERM: name and password are not a valid combination
 
 #### Change password
-
-*Capability:* (user)
 
     -> change password <name|uid> <password> <newpassword>
     <- + OK
@@ -309,8 +302,6 @@ Return Codes:
 
 #### Change name
 
-*Capability:* (user)
-
     -> change name <name|uid> <password> <newname>
     <- + OK
 
@@ -322,8 +313,6 @@ Return Codes:
     EINVAL: Parameter missing or invalid
 
 #### List all groups of a user
-
-*Capability:* (user group)
 
     -> user groups <name|uid>
     <- administrators:1
@@ -343,8 +332,6 @@ Return Codes:
     
 #### Delete user
 
-*Capability:* (user)
-
     delete user <name|uid>
 
 Return Codes:
@@ -354,8 +341,6 @@ Return Codes:
     EINVAL: Parameter missing or invalid
     
 #### All users
-
-*Capability:* (user admin)
 
     -> users
     <- foo@bar.com:1
@@ -375,8 +360,6 @@ Return Codes:
 
 #### Create Group
 
-*Capability:* (group)
-
     -> group <name>
     <- + OK 1
 
@@ -388,8 +371,6 @@ Return Codes:
 
 #### Add user to group
 
-*Capability:* (user group)
-
     -> add <name|uid> <group|gid>
     <- + OK
 
@@ -399,8 +380,6 @@ Return Codes:
     ENOENT: Group or user doesn't exist
     
 #### Remove user from group
-
-*Capability:* (user group)
 
     -> remove <name|uid> <group|gid>
     <- + OK
@@ -412,8 +391,6 @@ Return Codes:
 
 #### Delete group, user, permission, role
 
-*Capability:* (group)
-
     -> delete group <group|gid>
     <- + OK
 
@@ -423,8 +400,6 @@ Return Codes:
     ENOENT: Group doesn't exist
     
 #### Groups
-
-*Capability:* (group)
 
     -> groups
     <- administrators:1
@@ -441,8 +416,6 @@ Return Codes:
     OK: Ok
 
 #### Users of a group
-
-*Capability:* (user group admin)
 
     -> group users <group|gid>
     <- foo@bar.com:1

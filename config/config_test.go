@@ -12,7 +12,6 @@ func TestRead(t *testing.T) {
 		t.Errorf("Failed to parse gcfg data: %s", err)
 	}
 
-	var nilSlice []string
 	var nilString string
 	var nilInt int
 
@@ -21,9 +20,10 @@ func TestRead(t *testing.T) {
 		Syslog{3, "Debug"},
 		ClientAuth{[]Auth{}},
 		Security{nilString, nilString},
-		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
+
+		Ssl{true, "config/key.pem", "config/cert.pem", nilString, nilInt, nilInt},
 		Sqlite{"./ustackd.b"},
-		Proxy{""},
+		Proxy{"", false},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
@@ -54,7 +54,6 @@ func TestReadAll(t *testing.T) {
 		},
 		Ssl{
 			true,
-			[]string{"::1:8765"},
 			"/etc/ustack/key.pem",
 			"/etc/ustack/cert.pem",
 			"ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS",
@@ -62,7 +61,7 @@ func TestReadAll(t *testing.T) {
 			771,
 		},
 		Sqlite{"ustack.db"},
-		Proxy{"127.0.0.1:7654"},
+		Proxy{"127.0.0.1:7654", true},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {

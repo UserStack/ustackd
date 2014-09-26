@@ -56,7 +56,6 @@ type Security struct {
 
 type Ssl struct {
 	Enabled                    bool
-	Listen                     []string
 	Key, Cert, Ciphers         string
 	Protocol_Min, Protocol_Max int
 }
@@ -67,6 +66,7 @@ type Sqlite struct {
 
 type Proxy struct {
 	Host string
+	Ssl bool
 }
 
 func Read(filename string) (Config, error) {
