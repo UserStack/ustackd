@@ -6,6 +6,7 @@ import (
 	"net/textproto"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/UserStack/ustackd/backends"
 )
@@ -13,6 +14,7 @@ import (
 /* parts of the code are taken from smtp.go from the core library */
 
 type Client struct {
+	mutex sync.Mutex
 	Text *textproto.Conn
 	conn net.Conn
 }
@@ -46,6 +48,8 @@ func NewClient(conn net.Conn, host string) (*Client, error) {
 }
 
 func (client *Client) CreateUser(name string, password string) (int64, *backends.Error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("user %s %s", name, password)
 	if err != nil {
 		return 0, &backends.Error{"EFAULT", err.Error()}
@@ -54,6 +58,8 @@ func (client *Client) CreateUser(name string, password string) (int64, *backends
 }
 
 func (client *Client) DisableUser(nameuid string) *backends.Error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("disable %s", nameuid)
 	if err != nil {
 		return &backends.Error{"EFAULT", err.Error()}
@@ -62,6 +68,8 @@ func (client *Client) DisableUser(nameuid string) *backends.Error {
 }
 
 func (client *Client) EnableUser(nameuid string) *backends.Error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("enable %s", nameuid)
 	if err != nil {
 		return &backends.Error{"EFAULT", err.Error()}
@@ -70,6 +78,8 @@ func (client *Client) EnableUser(nameuid string) *backends.Error {
 }
 
 func (client *Client) SetUserData(nameuid string, key string, value string) *backends.Error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("set %s %s %s", nameuid, key, value)
 	if err != nil {
 		return &backends.Error{"EFAULT", err.Error()}
@@ -78,6 +88,8 @@ func (client *Client) SetUserData(nameuid string, key string, value string) *bac
 }
 
 func (client *Client) GetUserData(nameuid string, key string) (string, *backends.Error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("get %s %s", nameuid, key)
 	if err != nil {
 		return "", &backends.Error{"EFAULT", err.Error()}
@@ -95,6 +107,8 @@ func (client *Client) GetUserData(nameuid string, key string) (string, *backends
 }
 
 func (client *Client) LoginUser(name string, password string) (int64, *backends.Error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("login %s %s", name, password)
 	if err != nil {
 		return 0, &backends.Error{"EFAULT", err.Error()}
@@ -115,6 +129,8 @@ func (client *Client) UserGroups(nameuid string) ([]backends.Group, *backends.Er
 }
 
 func (client *Client) DeleteUser(nameuid string) *backends.Error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("delete user %s", nameuid)
 	if err != nil {
 		return &backends.Error{"EFAULT", err.Error()}
@@ -123,6 +139,8 @@ func (client *Client) DeleteUser(nameuid string) *backends.Error {
 }
 
 func (client *Client) Users() ([]backends.User, *backends.Error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("users")
 	if err != nil {
 		return nil, &backends.Error{"EFAULT", err.Error()}
