@@ -12,62 +12,57 @@ type Interpreter struct {
 }
 
 func (ip *Interpreter) parse(line string) {
-	ip.Log(line)
-	if strings.HasPrefix(line, "client auth ") {
+	cmd := strings.ToLower(line)
+	if strings.HasPrefix(cmd, "client auth ") {
 		ip.clientAuth(line[12:])
-	} else if strings.HasPrefix(line, "login ") {
+	} else if strings.HasPrefix(cmd, "login ") {
 		ip.login(line[6:])
-	} else if strings.HasPrefix(line, "disable ") {
+	} else if strings.HasPrefix(cmd, "disable ") {
 		ip.disable(line[8:])
-	} else if strings.HasPrefix(line, "enable ") {
+	} else if strings.HasPrefix(cmd, "enable ") {
 		ip.enable(line[7:])
-	} else if strings.HasPrefix(line, "set ") {
+	} else if strings.HasPrefix(cmd, "set ") {
 		ip.set(line[4:])
-	} else if strings.HasPrefix(line, "get ") {
+	} else if strings.HasPrefix(cmd, "get ") {
 		ip.get(line[4:])
-	} else if strings.HasPrefix(line, "change password ") {
+	} else if strings.HasPrefix(cmd, "change password ") {
 		ip.changePassword(line[16:])
-	} else if strings.HasPrefix(line, "change name ") {
+	} else if strings.HasPrefix(cmd, "change name ") {
 		ip.changeName(line[13:])
-	} else if strings.HasPrefix(line, "user groups ") {
+	} else if strings.HasPrefix(cmd, "user groups ") {
 		ip.userGroups(line[12:])
-	} else if strings.HasPrefix(line, "user ") {
+	} else if strings.HasPrefix(cmd, "user ") {
 		ip.user(line[5:])
-	} else if strings.HasPrefix(line, "delete user ") {
+	} else if strings.HasPrefix(cmd, "delete user ") {
 		ip.deleteUser(line[12:])
-	} else if strings.HasPrefix(line, "users") {
+	} else if strings.HasPrefix(cmd, "users") {
 		ip.users(line[5:])
-	} else if strings.HasPrefix(line, "add ") {
+	} else if strings.HasPrefix(cmd, "add ") {
 		ip.add(line[4:])
-	} else if strings.HasPrefix(line, "remove ") {
+	} else if strings.HasPrefix(cmd, "remove ") {
 		ip.remove(line[7:])
-	} else if strings.HasPrefix(line, "delete group ") {
+	} else if strings.HasPrefix(cmd, "delete group ") {
 		ip.deleteGroup(line[13:])
-	} else if strings.HasPrefix(line, "groups") {
+	} else if strings.HasPrefix(cmd, "groups") {
 		ip.groups(line[6:])
-	} else if strings.HasPrefix(line, "group users ") {
+	} else if strings.HasPrefix(cmd, "group users ") {
 		ip.groupUsers(line[12:])
-	} else if strings.HasPrefix(line, "group ") {
+	} else if strings.HasPrefix(cmd, "group ") {
 		ip.group(line[6:])
-	} else if line == "quit" {
+	} else if cmd == "quit" {
 		ip.quit(line)
-	} else if line == "stats" {
+	} else if cmd == "stats" {
 		ip.Ok()
 	} else {
-		ip.Log("EFAULT invalid command")
 		ip.Err("EFAULT")
 	}
 }
 
 func (ip *Interpreter) clientAuth(passwd string) {
-	ip.Log("Try login with '" + passwd + "'")
-
 	if passwd == "secret" {
 		ip.loggedin = true
-		ip.Log("Ok")
 		ip.OkValue("(user group)")
 	} else {
-		ip.Log("EPERM client has no permission")
 		ip.Err("EPERM")
 	}
 }
@@ -201,53 +196,44 @@ func (ip *Interpreter) withArgs(line string, n int, fn withArgsFn) {
 	if len(args) == n {
 		fn(args)
 	} else {
-		ip.Log("EFAULT invalid number of argumets")
 		ip.Err("EFAULT")
 	}
 }
 
 func (ip *Interpreter) simpleResponder(err *backends.Error) {
 	if err != nil {
-		ip.Log(err.Code + " " + err.Message)
 		ip.Err(err.Code)
 	} else {
-		ip.Log("Ok")
 		ip.Ok()
 	}
 }
 
 func (ip *Interpreter) intResponder(value int64, err *backends.Error) {
 	if err != nil {
-		ip.Log(err.Code + " " + err.Message)
 		ip.Err(err.Code)
 	} else {
-		ip.Log("Ok")
 		ip.OkValue(fmt.Sprintf("%d", value))
 	}
 }
 
 func (ip *Interpreter) groupResponder(items []backends.Group, err *backends.Error) {
 	if err != nil {
-		ip.Log(err.Code + " " + err.Message)
 		ip.Err(err.Code)
 	} else {
 		for _, item := range items {
 			ip.Write(item.String())
 		}
-		ip.Log("Ok")
 		ip.Ok()
 	}
 }
 
 func (ip *Interpreter) userResponder(items []backends.User, err *backends.Error) {
 	if err != nil {
-		ip.Log(err.Code + " " + err.Message)
 		ip.Err(err.Code)
 	} else {
 		for _, item := range items {
 			ip.Write(item.String())
 		}
-		ip.Log("Ok")
 		ip.Ok()
 	}
 }

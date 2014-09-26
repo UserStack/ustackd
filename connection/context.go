@@ -24,6 +24,7 @@ func NewContext(conn net.Conn, server *server.Server) *Context {
 }
 
 func (context *Context) Write(line string) {
+	context.Log("<- " + line)
 	context.writer.WriteString(line + "\r\n")
 	context.writer.Flush()
 }
@@ -62,10 +63,11 @@ func (context *Context) Handle() {
 
 	for !context.quitting {
 		line, err := context.reader.ReadString('\n')
+		line = strings.Trim(line, " \r\n")
+		context.Log("-> " + line)
 		if err != nil {
 			break // quit connection
 		}
-		line = strings.ToLower(strings.Trim(line, " \r\n"))
 		interpreter.parse(line)
 	}
 }
