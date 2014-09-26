@@ -2,6 +2,8 @@
 
 Project to learn golang.org in the context of user lifecycle management.
 
+![https://travis-ci.org/UserStack/ustackd.svg?branch=master](https://travis-ci.org/UserStack/ustackd.svg?branch=master)
+
 ## Description
 
 This repository contains the heart of the UserStack project. The core domain
