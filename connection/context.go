@@ -46,7 +46,8 @@ func (context *Context) Log(line string) {
 }
 
 func (context *Context) Realm() {
-	realm := "ustackd 0.0.1"
+
+	realm := strings.Replace(context.Server.Cfg.Daemon.Realm, "$VERSION$", context.Server.App.Version, 1)
 	context.Log("new client connected")
 	context.Write(realm + " (user group)")
 }

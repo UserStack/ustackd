@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"github.com/UserStack/ustackd/backends"
+	"github.com/UserStack/ustackd/client"
 	"github.com/UserStack/ustackd/config"
 	"github.com/UserStack/ustackd/connection"
 	"github.com/UserStack/ustackd/server"
-	"github.com/UserStack/ustackd/client"
 	"github.com/codegangsta/cli"
 )
 
