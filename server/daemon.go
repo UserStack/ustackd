@@ -12,10 +12,16 @@ import (
 )
 
 func (server *Server) Demonize() (err error) {
+	chrootPath := server.Cfg.Security.Chroot
+	if chrootPath != "" {
+		if err = server.chroot(chrootPath); err != nil {
+			return
+		}
+	}
+
 	uid := server.Cfg.Security.Uid
 	if uid != "" {
 		if err = server.dropPrivileges(uid); err != nil {
-			server.Logger.Println(err)
 			return
 		}
 	}
@@ -23,10 +29,17 @@ func (server *Server) Demonize() (err error) {
 	pidFile := server.Cfg.Daemon.Pid_Path + "/" + server.AppName + ".pid"
 	err = server.checkPidFile(pidFile, server.AppName)
 	if err != nil {
-		server.Logger.Println(err.Error())
 		return
 	}
 	server.writePidFile(pidFile)
+	return
+}
+
+func (server *Server) chroot(chrootPath string) (err error) {
+	if err = syscall.Chroot(chrootPath); err != nil {
+		return
+	}
+	err = syscall.Chdir("/")
 	return
 }
 
@@ -106,8 +119,7 @@ func (server *Server) readPidFile(pidFile string) (pid int, err error) {
 	if err != nil {
 		return
 	}
-	pid, err = strconv.Atoi(string(line))
-	return
+	return strconv.Atoi(string(line))
 }
 
 func (server *Server) writePidFile(pidFile string) {

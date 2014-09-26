@@ -51,9 +51,10 @@ func main() {
 				return
 			}
 		}
-		var backend backends.Abstract
-		server := server.Server{logger, &cfg, backend, app.Name}
+
+		server := server.Server{Logger: logger, Cfg: &cfg, AppName: app.Name}
 		if err = server.Demonize(); err != nil {
+			logger.Printf("Unable to demonize: %s\n", err)
 			return
 		}
 
@@ -71,7 +72,7 @@ func main() {
 				cfg.Sqlite.Url, serr)
 			return
 		}
-		backend = &sqlite
+		server.Backend = &sqlite
 
 		isRunning := true
 		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
