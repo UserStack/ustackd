@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/syslog"
 	"reflect"
 	"testing"
 )
@@ -17,8 +18,8 @@ func TestRead(t *testing.T) {
 
 	expected := Config{
 		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", "./ustackd.pid", false},
-		Syslog{3, "Debug"},
-		ClientAuth{[]Auth{}},
+		Syslog{syslog.LOG_FTP, syslog.LOG_DEBUG},
+		Client{[]Auth{}},
 		Security{nilString, nilString},
 
 		Ssl{true, "config/key.pem", "config/cert.pem", nilString, nilInt, nilInt},
@@ -41,8 +42,8 @@ func TestReadAll(t *testing.T) {
 
 	expected := Config{
 		Daemon{[]string{"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", "/var/run/ustackd.pid", true},
-		Syslog{3, "Debug"},
-		ClientAuth{[]Auth{
+		Syslog{syslog.LOG_FTP, syslog.LOG_DEBUG},
+		Client{[]Auth{
 			Auth{"42421da75756d69832d", "//", false},
 			Auth{"6d95e4ac638daf4b786", "/^(login|set|get|change (password|email))/", true},
 			Auth{"04d6eb93ab5d30f7bb0", "/^(users|groups|group users)/", false},
@@ -82,39 +83,36 @@ func TestNoFile(t *testing.T) {
 }
 
 func TestSplitAuth(t *testing.T) {
-	var configIntern ConfigIntern
-	configIntern.Client = Client{Auth: []string{"a:b:c"}}
-	config, err := splitAuth(configIntern)
+	clientIntern := ClientIntern{Auth: []string{"a:b:c"}}
+	client, err := splitAuth(clientIntern)
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	expected := ClientAuth{[]Auth{Auth{"a", "c", false}}}
-	if !reflect.DeepEqual(config.ClientAuth, expected) {
-		t.Errorf("Config.ClientAuth is expected to be %+v, but is %+v", expected, config.ClientAuth)
+	expected := Client{[]Auth{Auth{"a", "c", false}}}
+	if !reflect.DeepEqual(client, expected) {
+		t.Errorf("Config.Client is expected to be %+v, but is %+v", expected, client)
 	}
 
 }
 
 func TestSplitAuthAllow(t *testing.T) {
-	var configIntern ConfigIntern
-	configIntern.Client = Client{Auth: []string{"a:allow:c"}}
-	config, err := splitAuth(configIntern)
+	clientIntern := ClientIntern{Auth: []string{"a:allow:c"}}
+	client, err := splitAuth(clientIntern)
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	expected := ClientAuth{[]Auth{Auth{"a", "c", true}}}
-	if !reflect.DeepEqual(config.ClientAuth, expected) {
-		t.Errorf("Config.ClientAuth is expected to be %+v, but is %+v", expected, config.ClientAuth)
+	expected := Client{[]Auth{Auth{"a", "c", true}}}
+	if !reflect.DeepEqual(client, expected) {
+		t.Errorf("Config.Client is expected to be %+v, but is %+v", expected, client)
 	}
 
 }
 
 func TestSplitAuthFail(t *testing.T) {
-	var configIntern ConfigIntern
-	configIntern.Client = Client{Auth: []string{"a:b"}}
-	_, err := splitAuth(configIntern)
+	clientIntern := ClientIntern{Auth: []string{"a:b"}}
+	_, err := splitAuth(clientIntern)
 	if err.Error() != "Could not split [client] auth line into 3 parts (Id, Command, Regex): a:b" {
 		t.Error("Failed to fail when 1 part is missing")
 	}

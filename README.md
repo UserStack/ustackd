@@ -38,12 +38,14 @@ This section describes the configuration of the ustackd.
     pid = ./ustackd.pid
 
     [syslog]
+    # (USER, MAIL, DAEMON, AUTH, SYSLOG, LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP,
+    # LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7)
     # which syslog facility should be used
-    facility = 3 # (system daemons)
+    facility = FTP
 
     # set the syslog log level
-    # (Emergency, Alert, Critical, Error, Warning, Notice, Informational, Debug)
-    level = Debug
+    # (EMERG ALERT CRIT ERR WARNING NOTICE INFO DEBUG)
+    level = DEBUG
     
     [client]
     # client that is allowed to issue all commands (e.g. web gui)
