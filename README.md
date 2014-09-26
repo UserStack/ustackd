@@ -158,6 +158,7 @@ Proxy backend implementation connects to a different ustackd and proxies request
     [Daemon]
     backend = sqlite
     
+    [Proxy]
     # connection to the remote ustackd
     host = localhost:7543
     
