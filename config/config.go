@@ -13,6 +13,7 @@ type ConfigIntern struct {
 	Security
 	Ssl
 	Sqlite
+	Proxy
 }
 
 type Config struct {
@@ -22,6 +23,7 @@ type Config struct {
 	Security
 	Ssl
 	Sqlite
+	Proxy
 }
 
 type Daemon struct {
@@ -63,6 +65,10 @@ type Sqlite struct {
 	Url string
 }
 
+type Proxy struct {
+	Host string
+}
+
 func Read(filename string) (Config, error) {
 	var cfgIntern ConfigIntern
 	var config Config
@@ -82,6 +88,7 @@ func splitAuth(cfgIntern ConfigIntern) (Config, error) {
 	config.Security = cfgIntern.Security
 	config.Ssl = cfgIntern.Ssl
 	config.Sqlite = cfgIntern.Sqlite
+	config.Proxy = cfgIntern.Proxy
 
 	var clientAuth ClientAuth
 	clientAuth.Auth = make([]Auth, len(cfgIntern.Client.Auth))

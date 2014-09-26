@@ -12,6 +12,7 @@ import (
 	"github.com/UserStack/ustackd/config"
 	"github.com/UserStack/ustackd/connection"
 	"github.com/UserStack/ustackd/server"
+	"github.com/UserStack/ustackd/client"
 	"github.com/codegangsta/cli"
 )
 
@@ -66,13 +67,30 @@ func main() {
 		}
 		logger.Printf("ustackd listenting on " + bindAddress + "\n")
 
-		sqlite, serr := backends.NewSqliteBackend(cfg.Sqlite.Url)
-		if serr != nil {
-			logger.Printf("Unable to open sqlite at %s: %s\n",
-				cfg.Sqlite.Url, serr)
+		// get the right backend for the configuration
+		switch cfg.Daemon.Backend {
+		case "sqlite":
+			sqlite, serr := backends.NewSqliteBackend(cfg.Sqlite.Url)
+			if serr != nil {
+				logger.Printf("Unable to open sqlite at %s: %s\n",
+					cfg.Sqlite.Url, serr)
+				return
+			}
+			server.Backend = &sqlite
+		case "proxy":
+			proxy, serr := client.Dial(cfg.Proxy.Host)
+			if serr != nil {
+				logger.Printf("Unable to open proxy at %s: %s\n",
+					cfg.Proxy.Host, serr)
+				return
+			}
+			server.Backend = proxy
+		case "nil":
+			server.Backend = &backends.NilBackend{}
+		default:
+			logger.Printf("Unkown backend: %s\n", cfg.Daemon.Backend)
 			return
 		}
-		server.Backend = &sqlite
 
 		isRunning := true
 		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"

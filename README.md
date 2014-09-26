@@ -91,7 +91,6 @@ This section describes the configuration of the ustackd.
     [sqlite]
     url = ustack.db
     
-    
 ## Daemon command line options
 
     ustackd [-c config file] [-f|--foreground]
@@ -102,6 +101,13 @@ locations in order:
 * ./ustack.conf
 * /etc/ustack.conf
 * /usr/local/etc/ustack.conf
+
+## Start hacking
+
+Simply download the dependencies and start the server:
+
+    make prepare
+    go run ustackd.go -f
 
 ## Domain Model
 
@@ -130,35 +136,37 @@ Capability: Customer, User
 
 Sqlite 3 implementation of the backend.
 
-### postgresql
+    [Daemon]
+    backend = sqlite
+    
+    [sqlite]
+    url = /var/run/ustack.db
+    
+Or to use a memory database for testing
+    
+    [sqlite]
+    url = :memory:
+
+### proxy
 
 Capability: Customer, User
 
-PostgreSQL backend implementation.
+Proxy backend implementation connects to a different ustackd and proxies requests.
 
-### redis
+    [Daemon]
+    backend = sqlite
+    
+    [proxy]
+    host = 127.0.0.1:7543
+
+### nil
 
 Capability: Customer, User
 
-Redis backend implementation.
+Nil backend implementation is a dummy implementation, that always returns ok.
 
-### mongodb
-
-Capability: Customer, User
-
-MongoDB backend implementation.
-
-### pam
-
-Capability: User, Group
-
-PAM backend implementation.
-
-### unix
-
-Capability: User, Group
-
-Unix backend implementation.
+    [Daemon]
+    backend = nil
 
 ## Protocol
 

@@ -23,6 +23,7 @@ func TestRead(t *testing.T) {
 		Security{nilString, nilString},
 		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
 		Sqlite{"./ustack.db"},
+		Proxy{""},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
@@ -61,6 +62,7 @@ func TestReadAll(t *testing.T) {
 			771,
 		},
 		Sqlite{"ustack.db"},
+		Proxy{"127.0.0.1:7654"},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
