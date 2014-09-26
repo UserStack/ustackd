@@ -1,7 +1,6 @@
 package client
 
 import (
-	"crypto/tls"
 	"fmt"
 	"testing"
 	"time"
@@ -25,7 +24,10 @@ func TestConnectTls(t *testing.T) {
 	if err != nil {
 		t.Fatal("client was unable to connect to server", err)
 	}
-	client.StartTls(&tls.Config{InsecureSkipVerify: true})
+	aerr := client.StartTlsWithCert("../config/cert.pem")
+	if aerr != nil {
+		t.Fatal("unable to establish tls", aerr)
+	}
 	username := uniquser()
 	defer client.DeleteUser(username)
 	id, serr := client.CreateUser(username, "secret")

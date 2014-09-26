@@ -71,6 +71,7 @@ type Sqlite struct {
 type Proxy struct {
 	Host string
 	Ssl  bool
+	Cert string
 }
 
 func Read(filename string) (config Config, err error) {

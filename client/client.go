@@ -2,7 +2,9 @@ package client
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/textproto"
 	"strconv"
@@ -18,6 +20,7 @@ type Client struct {
 	mutex sync.Mutex
 	Text  *textproto.Conn
 	conn  net.Conn
+	host  string
 }
 
 // Dial returns a new Client connected to an ustack server at addr.
@@ -44,7 +47,7 @@ func NewClient(conn net.Conn, host string) (*Client, error) {
 		text.Close()
 		return nil, fmt.Errorf("Not a ustackd server")
 	}
-	return &Client{Text: text, conn: conn}, nil
+	return &Client{Text: text, conn: conn, host: host}, nil
 }
 
 func (client *Client) StartTls(config *tls.Config) error {
@@ -55,6 +58,22 @@ func (client *Client) StartTls(config *tls.Config) error {
 	client.conn = tls.Client(client.conn, config)
 	client.Text = textproto.NewConn(client.conn)
 	return nil
+}
+
+func (client *Client) StartTlsWithCert(cert string) error {
+	pemCerts, err := ioutil.ReadFile(cert)
+	if err != nil {
+		return fmt.Errorf("Unable to open cert at %s: %s\n", cert, err)
+	}
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemCerts) {
+		return fmt.Errorf("File doesn't contain pem certificates: %s\n", cert)
+	}
+	return client.StartTls(&tls.Config{
+		RootCAs:            certPool,
+		InsecureSkipVerify: false,
+		ServerName:         client.host,
+	})
 }
 
 func (client *Client) CreateUser(name string, password string) (int64, *backends.Error) {

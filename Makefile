@@ -19,3 +19,6 @@ test:
 
 fmt:
 	go fmt ./...
+
+cert:
+	openssl req -x509 -newkey rsa:2048 -keyout config/key.pem -out config/cert.pem -days 365

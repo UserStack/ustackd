@@ -80,7 +80,11 @@ func main() {
 		case "proxy":
 			proxy, serr := client.Dial(cfg.Proxy.Host)
 			if cfg.Proxy.Ssl {
-				proxy.StartTls(&tls.Config{InsecureSkipVerify: true})
+				if cfg.Proxy.Cert == "" {
+					serr = proxy.StartTls(&tls.Config{InsecureSkipVerify: true})
+				} else {
+					serr = proxy.StartTlsWithCert(cfg.Proxy.Cert)
+				}
 			}
 			if serr != nil {
 				logger.Printf("Unable to open proxy at %s: %s\n",

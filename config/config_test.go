@@ -23,8 +23,8 @@ func TestRead(t *testing.T) {
 		Security{nilString, nilString},
 
 		Ssl{true, "config/key.pem", "config/cert.pem", nilString, nilInt, nilInt},
-		Sqlite{"./ustackd.b"},
-		Proxy{"", false},
+		Sqlite{"./ustackd.db"},
+		Proxy{"", false, ""},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
@@ -61,8 +61,8 @@ func TestReadAll(t *testing.T) {
 			771,
 			771,
 		},
-		Sqlite{"ustack.db"},
-		Proxy{"127.0.0.1:7654", true},
+		Sqlite{"ustackd.db"},
+		Proxy{"127.0.0.1:7654", true, "config/cert.pem"},
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
