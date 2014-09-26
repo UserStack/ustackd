@@ -25,4 +25,5 @@ _testmain.go
 
 ustackd
 ustack.db
+ustackd.b
 ustackd.pid

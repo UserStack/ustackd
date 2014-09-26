@@ -27,12 +27,11 @@ func (server *Server) Demonize() (err error) {
 		}
 	}
 
-	pidFile := server.Cfg.Daemon.Pid_Path + "/" + server.App.Name + ".pid"
-	err = server.checkPidFile(pidFile, server.App.Name)
+	err = server.checkPidFile(server.Cfg.Daemon.Pid, server.App.Name)
 	if err != nil {
 		return
 	}
-	server.writePidFile(pidFile)
+	server.writePidFile(server.Cfg.Daemon.Pid)
 	return
 }
 
@@ -133,11 +132,10 @@ func (server *Server) writePidFile(pidFile string) {
 }
 
 func (server *Server) CheckSignal(isRunning *bool, cb func() error) {
-	pidFile := server.Cfg.Daemon.Pid_Path + "/" + server.App.Name + ".pid"
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, os.Kill)
 	<-channel //Block until a signal is received
-	os.Remove(pidFile)
+	os.Remove(server.Cfg.Daemon.Pid)
 	*isRunning = false
 	cb()
 }

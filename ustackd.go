@@ -23,7 +23,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
-			Value: "config/ustack.conf",
+			Value: "config/ustackd.conf",
 			Usage: "the path of the main configuration file",
 		},
 		cli.BoolFlag{

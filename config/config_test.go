@@ -6,7 +6,7 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	cfg, err := Read("ustack.conf")
+	cfg, err := Read("ustackd.conf")
 
 	if err != nil {
 		t.Errorf("Failed to parse gcfg data: %s", err)
@@ -17,12 +17,12 @@ func TestRead(t *testing.T) {
 	var nilInt int
 
 	expected := Config{
-		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", "./", false},
+		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", "./ustackd.pid", false},
 		Syslog{3, "Debug"},
 		ClientAuth{[]Auth{}},
 		Security{nilString, nilString},
 		Ssl{true, nilSlice, nilString, nilString, nilString, nilInt, nilInt},
-		Sqlite{"./ustack.db"},
+		Sqlite{"./ustackd.b"},
 		Proxy{""},
 	}
 
@@ -40,7 +40,7 @@ func TestReadAll(t *testing.T) {
 	}
 
 	expected := Config{
-		Daemon{[]string{"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", "/var/run", true},
+		Daemon{[]string{"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", "/var/run/ustackd.pid", true},
 		Syslog{3, "Debug"},
 		ClientAuth{[]Auth{
 			Auth{"42421da75756d69832d", "//", false},
