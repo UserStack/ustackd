@@ -15,7 +15,6 @@ test:
 	go test ./...
 	ok=$$?
 	sh -c "kill -INT `cat ${PID_FILE}`"
-	rm -f ${PID_FILE}
 	exit ${ok}
 
 fmt:

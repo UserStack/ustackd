@@ -94,12 +94,10 @@ func (server *Server) checkPidFile(pidFile, appname string) (err error) {
 	}
 	pid, err := server.readPidFile(pidFile)
 	if err != nil {
+		println("123")
 		return
 	}
-	output, err := exec.Command("ps", "-o", "command=", strconv.Itoa(pid)).Output()
-	if err != nil {
-		return
-	}
+	output, _ := exec.Command("ps", "-o", "command=", strconv.Itoa(pid)).Output()
 	if strings.Contains(string(output), appname) {
 		err = fmt.Errorf("Running %s found with PID: %d", appname, pid)
 		return
