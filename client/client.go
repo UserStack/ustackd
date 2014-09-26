@@ -1,13 +1,13 @@
 package client
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/textproto"
 	"strconv"
 	"strings"
 	"sync"
-	"crypto/tls"
 
 	"github.com/UserStack/ustackd/backends"
 )

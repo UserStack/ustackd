@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"log/syslog"
@@ -78,6 +79,9 @@ func main() {
 			server.Backend = &sqlite
 		case "proxy":
 			proxy, serr := client.Dial(cfg.Proxy.Host)
+			if cfg.Proxy.Ssl {
+				proxy.StartTls(&tls.Config{InsecureSkipVerify: true})
+			}
 			if serr != nil {
 				logger.Printf("Unable to open proxy at %s: %s\n",
 					cfg.Proxy.Host, serr)

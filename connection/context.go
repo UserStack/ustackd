@@ -69,15 +69,15 @@ func (context *Context) Handle() {
 			break // quit connection
 		}
 		line = strings.Trim(line, " \r\n")
+		context.Log("-> " + line)
 		if context.starttls(line) {
 			continue
 		}
-		context.Log("-> " + line)
 		interpreter.parse(line)
 	}
 }
 
-func (context Context) starttls(line string) bool {
+func (context *Context) starttls(line string) bool {
 	if line == "starttls" && context.Cfg.Ssl.Enabled {
 		cert, err := tls.LoadX509KeyPair(context.Cfg.Ssl.Cert,
 			context.Cfg.Ssl.Key)
@@ -92,6 +92,7 @@ func (context Context) starttls(line string) bool {
 		context.conn = tls.Server(context.conn, &config)
 		context.reader = bufio.NewReader(context.conn)
 		context.writer = bufio.NewWriter(context.conn)
+		context.Log("now on secure channel")
 		return true
 	} else {
 		return false
