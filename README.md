@@ -158,9 +158,14 @@ Proxy backend implementation connects to a different ustackd and proxies request
     [Daemon]
     backend = sqlite
     
-    [proxy]
-    host = 127.0.0.1:7543
+    # connection to the remote ustackd
+    host = localhost:7543
+    
+    # enable ssl transmission (without cert man in the middle is possible)
     ssl = yes
+    
+    # cert that should be used by the server if not passed, all certs are allowed
+    cert = config/cert.pem
 
 ### nil
 
