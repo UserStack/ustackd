@@ -7,20 +7,72 @@ import (
 )
 
 const (
-	STATUS_ACTIVE   = 1
-	STATUS_INACTIVE = 0
+	STATUS_ACTIVE          = 1
+	STATUS_INACTIVE        = 0
+	CREATE_USER_TABLE_STMT = `CREATE TABLE IF NOT EXISTS Users (
+		uid INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		password TEXT NOT NULL,
+		state INTEGER DEFAULT %d,
+		CONSTRAINT SingleKeys UNIQUE (name) ON CONFLICT ROLLBACK
+	);`
+	CREATE_GROUP_TABLE_STMT = `CREATE TABLE IF NOT EXISTS Groups (
+		gid INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		CONSTRAINT SingleKeys UNIQUE (name) ON CONFLICT ROLLBACK
+	);`
+	CREATE_USER_GROUP_TABLE_STMT = `CREATE TABLE IF NOT EXISTS UserGroups (
+		uid INTEGER NOT NULL REFERENCES Users(uid) ON UPDATE CASCADE,
+		gid INTEGER NOT NULL REFERENCES Groups(gid) ON UPDATE CASCADE,
+		CONSTRAINT SingleKeys UNIQUE (uid, gid) ON CONFLICT IGNORE
+	);`
+	CREATE_USER_VALUES_TABLE_STMT = `CREATE TABLE IF NOT EXISTS UserValues (
+		uid INTEGER REFERENCES Users(uid) ON UPDATE CASCADE,
+		key TEXT NOT NULL,
+		value BLOB NOT NULL,
+		CONSTRAINT SingleKeys UNIQUE (uid, key) ON CONFLICT REPLACE
+	);`
+	CREATE_USER_STMT = `INSERT INTO Users (
+		name, password
+	) VALUES (
+		?, ?
+	);`
+	USERS_STMT       = `SELECT name, uid FROM Users`
+	DELETE_USER_STMT = `DELETE FROM Users WHERE uid = ? OR name = ?;`
+	LOGIN_USER_STMT  = `SELECT uid FROM Users
+		WHERE name = ? AND password = ? AND state = %d;`
+	SET_USER_STATE_STMT = `UPDATE Users
+		SET state = ? WHERE name = ? OR uid = ?;`
+	UID_FOR_NAME_UID_STMT = `SELECT uid FROM Users
+		WHERE name = ? OR uid = ?;`
+	SET_USER_DATA_STMT = `INSERT INTO UserValues (
+		uid, key, value
+	) VALUES (
+		?, ?, ?
+	);`
+	GET_USER_DATA_STMT = `SELECT value FROM UserValues
+		WHERE uid = ? AND key = ?;`
 )
 
+var PREPARE = []string{
+	`PRAGMA encoding = "UTF-8";`,
+	"PRAGMA foreign_keys = ON;",
+	"PRAGMA journal_mode;",
+	"PRAGMA integrity_check;",
+	"PRAGMA busy_timeout = 60000;",
+	"PRAGMA auto_vacuum = INCREMENTAL;",
+}
+
 type SqliteBackend struct {
-	db                 *sql.DB
-	createUserStmt     *sql.Stmt
-	usersStmt          *sql.Stmt
-	deleteUserStmt     *sql.Stmt
-	loginUserStmt      *sql.Stmt
-	setUserStateStmt   *sql.Stmt
+	db                *sql.DB
+	createUserStmt    *sql.Stmt
+	usersStmt         *sql.Stmt
+	deleteUserStmt    *sql.Stmt
+	loginUserStmt     *sql.Stmt
+	setUserStateStmt  *sql.Stmt
 	uidForNameUidStmt *sql.Stmt
-	setUserDataStmt    *sql.Stmt
-	getUserDataStmt    *sql.Stmt
+	setUserDataStmt   *sql.Stmt
+	getUserDataStmt   *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
@@ -36,84 +88,61 @@ func NewSqliteBackend(url string) (SqliteBackend, error) {
 
 func (backend *SqliteBackend) init() error {
 	var err error
+	// set the default encoding, enable foreign keys, enable journal mode,
+	// check the integrity, set timeout to 60 sec and enable the auto vacuum
+	for _, stmt := range PREPARE {
+		_, err = backend.db.Exec(stmt)
+		if err != nil {
+			return err
+		}
+	}
 	// initialize all tables
-	_, err = backend.db.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS Users (
-		uid INTEGER PRIMARY KEY AUTOINCREMENT,
-		name VARCHAR,
-		password VARCHAR,
-		state INTEGER DEFAULT %d,
-		CONSTRAINT SingleKeys UNIQUE (name) ON CONFLICT FAIL
-	)`, STATUS_ACTIVE))
+	_, err = backend.db.Exec(fmt.Sprintf(CREATE_USER_TABLE_STMT, STATUS_ACTIVE))
 	if err != nil {
 		return err
 	}
-	_, err = backend.db.Exec(`CREATE TABLE IF NOT EXISTS Groups (
-		gid INTEGER PRIMARY KEY AUTOINCREMENT,
-		name VARCHAR,
-		CONSTRAINT SingleKeys UNIQUE (name) ON CONFLICT FAIL
-	)`)
+	_, err = backend.db.Exec(CREATE_GROUP_TABLE_STMT)
 	if err != nil {
 		return err
 	}
-	_, err = backend.db.Exec(`CREATE TABLE IF NOT EXISTS UserGroups (
-		uid INTEGER, gid INTEGER,
-		CONSTRAINT SingleKeys UNIQUE (uid, gid) ON CONFLICT IGNORE
-	)`)
+	_, err = backend.db.Exec(CREATE_USER_GROUP_TABLE_STMT)
 	if err != nil {
 		return err
 	}
-	_, err = backend.db.Exec(`CREATE TABLE IF NOT EXISTS UserValues (
-		uid INTEGER PRIMARY KEY AUTOINCREMENT,
-		key VARCHAR,
-		value BLOB,
-		CONSTRAINT SingleKeys UNIQUE (uid, key) ON CONFLICT REPLACE
-	)`)
+	_, err = backend.db.Exec(CREATE_USER_VALUES_TABLE_STMT)
 	if err != nil {
 		return err
 	}
-	backend.createUserStmt, err = backend.db.Prepare(`INSERT INTO Users (
-		name, password
-	) VALUES (
-		?, ?
-	)`)
+	backend.createUserStmt, err = backend.db.Prepare(CREATE_USER_STMT)
 	if err != nil {
 		return err
 	}
-	backend.usersStmt, err = backend.db.Prepare(`SELECT name, uid FROM Users`)
+	backend.usersStmt, err = backend.db.Prepare(USERS_STMT)
 	if err != nil {
 		return err
 	}
-	backend.deleteUserStmt, err = backend.db.Prepare(`DELETE FROM Users
-		WHERE uid = ? OR name = ?`)
+	backend.deleteUserStmt, err = backend.db.Prepare(DELETE_USER_STMT)
 	if err != nil {
 		return err
 	}
 	backend.loginUserStmt, err = backend.db.Prepare(fmt.Sprintf(
-		"SELECT uid FROM Users WHERE name = ? AND password = ? AND state = %d",
-		STATUS_ACTIVE))
+		LOGIN_USER_STMT, STATUS_ACTIVE))
 	if err != nil {
 		return err
 	}
-	backend.setUserStateStmt, err = backend.db.Prepare(`UPDATE Users
-		SET state = ? WHERE name = ? OR uid = ?`)
+	backend.setUserStateStmt, err = backend.db.Prepare(SET_USER_STATE_STMT)
 	if err != nil {
 		return err
 	}
-	backend.uidForNameUidStmt, err = backend.db.Prepare(`SELECT uid FROM Users
-	 	WHERE name = ? OR uid = ?`)
+	backend.uidForNameUidStmt, err = backend.db.Prepare(UID_FOR_NAME_UID_STMT)
 	if err != nil {
 		return err
 	}
-	backend.setUserDataStmt, err = backend.db.Prepare(`INSERT INTO UserValues (
-		uid, key, value
-	) VALUES (
-		?, ?, ?
-	)`)
+	backend.setUserDataStmt, err = backend.db.Prepare(SET_USER_DATA_STMT)
 	if err != nil {
 		return err
 	}
-	backend.getUserDataStmt, err = backend.db.Prepare(`SELECT value FROM UserValues
-	 	WHERE uid = ? AND key = ?`)
+	backend.getUserDataStmt, err = backend.db.Prepare(GET_USER_DATA_STMT)
 	if err != nil {
 		return err
 	}
@@ -126,6 +155,9 @@ func (backend *SqliteBackend) CreateUser(name string, password string) (int64, *
 	}
 	result, err := backend.createUserStmt.Exec(name, password)
 	if err != nil {
+		// after error occured, the statement is broken, we need to recreate it
+		backend.createUserStmt.Close()
+		backend.createUserStmt, _ = backend.db.Prepare(CREATE_USER_STMT)
 		return 0, &Error{"EEXIST", err.Error()}
 	}
 	var uid int64
@@ -133,6 +165,7 @@ func (backend *SqliteBackend) CreateUser(name string, password string) (int64, *
 	if err == nil {
 		return uid, nil
 	} else {
+		fmt.Printf("  Err %s\n", err)
 		return 0, &Error{"EFAULT", err.Error()}
 	}
 }
@@ -169,6 +202,7 @@ func (backend *SqliteBackend) GetUserData(nameuid string, key string) (string, *
 		return "", err
 	}
 	rows, gerr := backend.getUserDataStmt.Query(uid, key)
+	defer rows.Close()
 	if gerr != nil {
 		return "", &Error{"EFAULT", gerr.Error()}
 	}
@@ -222,6 +256,7 @@ func (backend *SqliteBackend) DeleteUser(nameuid string) *Error {
 
 	result, err := backend.deleteUserStmt.Exec(nameuid, nameuid)
 	if err != nil {
+		// recover stmt after error
 		return &Error{"EFAULT", err.Error()}
 	}
 	count, err := result.RowsAffected()

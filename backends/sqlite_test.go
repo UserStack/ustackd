@@ -34,6 +34,12 @@ func TestCreateUser(t *testing.T) {
 	if berr4.Code != "EINVAL" {
 		t.Fatal("should return EINVAL instead of", berr4.Code)
 	}
+
+	// but should work with regular user
+	_, berr5 := backend.CreateUser("test1", "secret")
+	if berr5 != nil {
+		t.Fatal("should not return error", berr5.Code, berr5.Message)
+	}
 }
 
 func TestEnableDisableUser(t *testing.T) {
@@ -190,7 +196,7 @@ func TestDeleteUser(t *testing.T) {
 
 	// create two users
 	backend.CreateUser("test0@example.com", "secret")
-	backend.CreateUser("test1@example.com", "secret")
+	backend.CreateUser("test-1411718662776791574", "secret")
 
 	// now has two users
 	users, _ := backend.Users()
@@ -198,18 +204,24 @@ func TestDeleteUser(t *testing.T) {
 		t.Fatal("user count should have been 2 but was", len(users))
 	}
 
-	// delete one using name
-	backend.DeleteUser("test1@example.com")
+	// delete one using uid
+	derr1 := backend.DeleteUser("1")
+	if derr1 != nil {
+		t.Fatal("should not error on delete", derr1.Code, derr1.Message)
+	}
 	users, _ = backend.Users()
 	if len(users) != 1 {
-		t.Fatal("user count should have been 1 but was", len(users))
+		t.Fatal("user count should have been 0 but was", len(users))
 	}
 
-	// delete one using uid
-	backend.DeleteUser("1")
+	// delete one using name
+	derr := backend.DeleteUser("test-1411718662776791574")
+	if derr != nil {
+		t.Fatal("should not error on delete", derr.Code, derr.Message)
+	}
 	users, _ = backend.Users()
 	if len(users) != 0 {
-		t.Fatal("user count should have been 0 but was", len(users))
+		t.Fatal("user count should have been 1 but was", len(users))
 	}
 }
 

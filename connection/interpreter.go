@@ -34,7 +34,7 @@ func (ip *Interpreter) parse(line string) {
 	} else if strings.HasPrefix(line, "user ") {
 		ip.user(line[5:])
 	} else if strings.HasPrefix(line, "delete user ") {
-		ip.deleteUser(line[:12])
+		ip.deleteUser(line[12:])
 	} else if strings.HasPrefix(line, "users") {
 		ip.users(line[5:])
 	} else if strings.HasPrefix(line, "add ") {
