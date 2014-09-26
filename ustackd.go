@@ -6,7 +6,6 @@ import (
 	"log/syslog"
 	"net"
 	"os"
-	"os/signal"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/config"
@@ -53,7 +52,7 @@ func main() {
 			}
 		}
 
-		server := server.Server{Logger: logger, Cfg: &cfg, AppName: app.Name}
+		server := server.Server{Logger: logger, Cfg: &cfg, App: app}
 		if err = server.Demonize(); err != nil {
 			logger.Printf("Unable to demonize: %s\n", err)
 			return
@@ -93,8 +92,7 @@ func main() {
 		}
 
 		isRunning := true
-		pidFile := cfg.Daemon.Pid_Path + "/" + app.Name + ".pid"
-		go checkSignal(pidFile, &isRunning, listener)
+		go server.CheckSignal(&isRunning, listener.Close)
 
 		for isRunning {
 			conn, err := listener.Accept()
@@ -108,13 +106,4 @@ func main() {
 	}
 
 	app.Run(os.Args)
-}
-
-func checkSignal(pidfile string, isRunning *bool, listener net.Listener) {
-	channel := make(chan os.Signal, 1)
-	signal.Notify(channel, os.Interrupt, os.Kill)
-	<-channel //Block until a signal is received
-	os.Remove(pidfile)
-	*isRunning = false
-	listener.Close()
 }

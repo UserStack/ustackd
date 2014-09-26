@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"strconv"
 	"strings"
@@ -26,8 +27,8 @@ func (server *Server) Demonize() (err error) {
 		}
 	}
 
-	pidFile := server.Cfg.Daemon.Pid_Path + "/" + server.AppName + ".pid"
-	err = server.checkPidFile(pidFile, server.AppName)
+	pidFile := server.Cfg.Daemon.Pid_Path + "/" + server.App.Name + ".pid"
+	err = server.checkPidFile(pidFile, server.App.Name)
 	if err != nil {
 		return
 	}
@@ -129,4 +130,14 @@ func (server *Server) writePidFile(pidFile string) {
 		pid := os.Getpid()
 		file.WriteString(strconv.Itoa(pid))
 	}
+}
+
+func (server *Server) CheckSignal(isRunning *bool, cb func() error) {
+	pidFile := server.Cfg.Daemon.Pid_Path + "/" + server.App.Name + ".pid"
+	channel := make(chan os.Signal, 1)
+	signal.Notify(channel, os.Interrupt, os.Kill)
+	<-channel //Block until a signal is received
+	os.Remove(pidFile)
+	*isRunning = false
+	cb()
 }
