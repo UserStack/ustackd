@@ -51,13 +51,13 @@ This section describes the configuration of the ustackd.
     
     [client]
     # client that is allowed to issue all commands (e.g. web gui)
-    auth = 42421da75756d69832d:deny://
-        
+    ; auth = 42421da75756d69832d:allow:.*
+    
     # client that is restricted to certain commands (e.g. auth server)
-    auth = 6d95e4ac638daf4b786:allow:/^(login|set|get|change (password|name))/
+    ; auth = 6d95e4ac638daf4b786:allow:^(login|set|get|change (password|email))
     
     # client that can manage everything, but is secure from data stealing
-    auth = 04d6eb93ab5d30f7bb0:deny:/^(users|groups|group users)/
+    ; auth = 04d6eb93ab5d30f7bb0:deny:^(users|groups|group users)
     
     [security]
     # change root to this location after start

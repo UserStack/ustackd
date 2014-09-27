@@ -14,14 +14,13 @@ type Context struct {
 	reader *bufio.Reader
 	writer *bufio.Writer
 	*server.Server
-	loggedin bool
 	quitting bool
 }
 
 func NewContext(conn net.Conn, server *server.Server) *Context {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	return &Context{conn, reader, writer, server, false, false}
+	return &Context{conn, reader, writer, server, false}
 }
 
 func (context *Context) Write(line string) {
@@ -61,7 +60,7 @@ func (context *Context) Close() {
 func (context *Context) Handle() {
 	context.Realm()
 	defer context.Close()
-	interpreter := Interpreter{context}
+	interpreter := Interpreter{Context: context}
 
 	for !context.quitting {
 		line, err := context.reader.ReadString('\n')

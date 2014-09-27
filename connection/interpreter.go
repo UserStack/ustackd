@@ -2,13 +2,17 @@ package connection
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/UserStack/ustackd/backends"
+	"github.com/UserStack/ustackd/config"
 )
 
 type Interpreter struct {
 	*Context
+	auth   *config.Auth
+	regexp *regexp.Regexp
 }
 
 func (ip *Interpreter) parse(line string) {
@@ -30,6 +34,10 @@ func (ip *Interpreter) alwaysAvailableCommands(line string) bool {
 }
 
 func (ip *Interpreter) sensitiveCommands(line string) bool {
+	if !ip.authorized(line) {
+		ip.Err("EACCES")
+		return true
+	}
 	cmd := strings.ToLower(line)
 	if strings.HasPrefix(cmd, "login ") {
 		ip.login(line[6:])
@@ -73,13 +81,40 @@ func (ip *Interpreter) sensitiveCommands(line string) bool {
 	return true
 }
 
-func (ip *Interpreter) clientAuth(passwd string) {
-	if passwd == "secret" {
-		ip.loggedin = true
-		ip.Ok()
+func (ip *Interpreter) authorized(line string) bool {
+	if (len(ip.Cfg.Client.Auth)) > 0 { // auth strings are defined, auth required
+		if ip.auth != nil { // is logged in
+			if ip.auth.Allow && ip.regexp.MatchString(line) {
+				return true
+			} else if !ip.auth.Allow && !ip.regexp.MatchString(line) { // Deny
+				return true
+			} else {
+				return false
+			}
+		} else {
+			return false
+		}
 	} else {
-		ip.Err("EPERM")
+		return true // no auth defined everthing is allowed
 	}
+}
+
+func (ip *Interpreter) clientAuth(passwd string) {
+	for _, auth := range ip.Cfg.Client.Auth {
+		if auth.Id == passwd {
+			ip.auth = &auth
+			var err error
+			ip.regexp, err = regexp.Compile(auth.Regex)
+			if err != nil {
+				ip.Log(err.Error())
+				ip.Err("EFAULT")
+				return
+			}
+			ip.Ok()
+			return
+		}
+	}
+	ip.Err("EPERM")
 }
 
 func (ip *Interpreter) stats(line string) {
