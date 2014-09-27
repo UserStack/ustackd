@@ -50,8 +50,8 @@ type Client struct {
 }
 
 type Auth struct {
-	Id, Regex string
-	Allow     bool
+	Passwd, Regex string
+	Allow         bool
 }
 
 type Security struct {
@@ -105,14 +105,14 @@ func splitAuth(clientIntern ClientIntern) (client Client, err error) {
 		splitAuth := strings.SplitN(line, ":", 3)
 
 		if len(splitAuth) != 3 {
-			err = fmt.Errorf("Could not split [client] auth line into 3 parts (Id, Command, Regex): %s", line)
+			err = fmt.Errorf("Could not split [client] auth line into 3 parts (Passwd, Command, Regex): %s", line)
 			return
 		}
 
 		var auth Auth
 		for j, word := range splitAuth {
 			if j == 0 {
-				auth.Id = word
+				auth.Passwd = word
 			}
 			if j == 1 {
 				auth.Allow = word == "allow"

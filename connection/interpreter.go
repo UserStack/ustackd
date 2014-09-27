@@ -101,7 +101,7 @@ func (ip *Interpreter) authorized(line string) bool {
 
 func (ip *Interpreter) clientAuth(passwd string) {
 	for _, auth := range ip.Cfg.Client.Auth {
-		if auth.Id == passwd {
+		if auth.Passwd == passwd {
 			ip.auth = &auth
 			var err error
 			ip.regexp, err = regexp.Compile(auth.Regex)

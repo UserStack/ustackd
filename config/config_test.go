@@ -68,9 +68,9 @@ func TestReadAll(t *testing.T) {
 		Daemon{[]string{"0.0.0.0:1234", "127.0.0.1:7654"}, "ustackd $VERSION$", "sqlite", "/var/run/ustackd.pid", true},
 		Syslog{syslog.LOG_FTP, syslog.LOG_DEBUG},
 		Client{[]Auth{
-			Auth{"42421da75756d69832d", "//", false},
-			Auth{"6d95e4ac638daf4b786", "/^(login|set|get|change (password|email))/", true},
-			Auth{"04d6eb93ab5d30f7bb0", "/^(users|groups|group users)/", false},
+			Auth{"42421da75756d69832d", ".*", true},
+			Auth{"6d95e4ac638daf4b786", "^(login|set|get|change (password|email))", true},
+			Auth{"04d6eb93ab5d30f7bb0", "^(users|groups|group users)", false},
 		},
 		},
 		Security{
@@ -134,7 +134,7 @@ func TestSplitAuthAllow(t *testing.T) {
 func TestSplitAuthFail(t *testing.T) {
 	clientIntern := ClientIntern{Auth: []string{"a:b"}}
 	_, err := splitAuth(clientIntern)
-	if err.Error() != "Could not split [client] auth line into 3 parts (Id, Command, Regex): a:b" {
+	if err.Error() != "Could not split [client] auth line into 3 parts (Passwd, Command, Regex): a:b" {
 		t.Error("Failed to fail when 1 part is missing")
 	}
 
