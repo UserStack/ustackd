@@ -59,9 +59,8 @@ type Security struct {
 }
 
 type Ssl struct {
-	Enabled                    bool
-	Key, Cert, Ciphers         string
-	Protocol_Min, Protocol_Max int
+	Enabled   bool
+	Key, Cert string
 }
 
 type Sqlite struct {

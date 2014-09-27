@@ -14,7 +14,6 @@ func TestRead(t *testing.T) {
 	}
 
 	var nilString string
-	var nilInt int
 
 	expected := Config{
 		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "sqlite", "./ustackd.pid", false},
@@ -22,7 +21,7 @@ func TestRead(t *testing.T) {
 		Client{[]Auth{}},
 		Security{nilString, nilString},
 
-		Ssl{true, "config/key.pem", "config/cert.pem", nilString, nilInt, nilInt},
+		Ssl{true, "config/key.pem", "config/cert.pem"},
 		Sqlite{"./ustackd.db"},
 		Proxy{"", false, ""},
 	}
@@ -41,7 +40,6 @@ func TestDefault(t *testing.T) {
 	}
 
 	var nilString string
-	var nilInt int
 
 	expected := Config{
 		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "nil", "./ustackd.pid", true},
@@ -49,7 +47,7 @@ func TestDefault(t *testing.T) {
 		Client{[]Auth{}},
 		Security{nilString, nilString},
 
-		Ssl{false, nilString, nilString, nilString, nilInt, nilInt},
+		Ssl{false, nilString, nilString},
 		Sqlite{nilString},
 		Proxy{nilString, false, nilString},
 	}
@@ -83,9 +81,6 @@ func TestReadAll(t *testing.T) {
 			true,
 			"/etc/ustack/key.pem",
 			"/etc/ustack/cert.pem",
-			"ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS",
-			771,
-			771,
 		},
 		Sqlite{"ustackd.db"},
 		Proxy{"127.0.0.1:7654", true, "config/cert.pem"},
