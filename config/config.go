@@ -8,13 +8,13 @@ import (
 )
 
 type ConfigIntern struct {
-	Daemon   Daemon
-	Syslog   SyslogIntern
-	Client   ClientIntern
-	Security Security
-	Ssl      Ssl
-	Sqlite   Sqlite
-	Proxy    Proxy
+	Daemon
+	Syslog SyslogIntern
+	Client ClientIntern
+	Security
+	Ssl
+	Sqlite
+	Proxy
 }
 
 type Config struct {
@@ -68,9 +68,9 @@ type Sqlite struct {
 }
 
 type Proxy struct {
-	Host string
-	Ssl  bool
-	Cert string
+	Host         string
+	Ssl          bool
+	Cert, Passwd string
 }
 
 func Read(filename string) (config Config, err error) {

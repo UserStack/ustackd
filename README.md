@@ -2,7 +2,7 @@
 
 Project to learn golang.org in the context of user lifecycle management.
 
-![https://travis-ci.org/UserStack/ustackd.svg?branch=master](https://travis-ci.org/UserStack/ustackd.svg?branch=master)
+![https://travis-ci.org/UserStack/ustackd.svg?branch=master](https://travis-ci.org/UserStack/ustackd)
 
 ## Description
 
@@ -158,6 +158,9 @@ Proxy backend implementation connects to a different ustackd and proxies request
     
     # cert that should be used by the server if not passed, all certs are allowed
     cert = config/cert.pem
+		
+		# authenticate als a certain client
+		passwd = SOMEVERYGOODSECRET
 
 ### nil
 

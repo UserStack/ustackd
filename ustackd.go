@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
 	"log/syslog"
@@ -79,17 +78,30 @@ func main() {
 			server.Backend = &sqlite
 		case "proxy":
 			proxy, serr := client.Dial(cfg.Proxy.Host)
+			if serr != nil {
+				logger.Printf("Unable to connect to %s: %s\n",
+					cfg.Proxy.Host, serr)
+				return
+			}
 			if cfg.Proxy.Ssl {
-				if cfg.Proxy.Cert == "" {
-					serr = proxy.StartTls(&tls.Config{InsecureSkipVerify: true})
+				if len(cfg.Proxy.Cert) > 0 {
+					serr = proxy.StartTlsWithoutCertCheck()
 				} else {
 					serr = proxy.StartTlsWithCert(cfg.Proxy.Cert)
 				}
 			}
 			if serr != nil {
-				logger.Printf("Unable to open proxy at %s: %s\n",
+				logger.Printf("Unable to open proxy for %s: %s\n",
 					cfg.Proxy.Host, serr)
 				return
+			}
+			if len(cfg.Proxy.Passwd) > 0 { // if passwd given
+				aerr := proxy.ClientAuth(cfg.Proxy.Passwd)
+				if aerr != nil {
+					logger.Printf("Unable to authenticate with %s: %s\n",
+						cfg.Proxy.Host, aerr.Code)
+					return
+				}
 			}
 			server.Backend = proxy
 		case "nil":

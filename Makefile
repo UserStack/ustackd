@@ -22,3 +22,7 @@ fmt:
 
 cert:
 	openssl req -x509 -newkey rsa:2048 -keyout config/key.pem -out config/cert.pem -days 365
+	openssl rsa -in config/key.pem -out config/key.pem
+
+clean:
+	rm -f ustackd ustackd.db ustackd.pid

@@ -60,6 +60,10 @@ func (client *Client) StartTls(config *tls.Config) error {
 	return nil
 }
 
+func (client *Client) StartTlsWithoutCertCheck() error {
+	return client.StartTls(&tls.Config{InsecureSkipVerify: true})
+}
+
 func (client *Client) StartTlsWithCert(cert string) error {
 	pemCerts, err := ioutil.ReadFile(cert)
 	if err != nil {
@@ -74,6 +78,16 @@ func (client *Client) StartTlsWithCert(cert string) error {
 		InsecureSkipVerify: false,
 		ServerName:         client.host,
 	})
+}
+
+func (client *Client) ClientAuth(password string) *backends.Error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	_, err := client.Text.Cmd("client auth %s", password)
+	if err != nil {
+		return &backends.Error{"EFAULT", err.Error()}
+	}
+	return client.handleResponse()
 }
 
 func (client *Client) CreateUser(name string, password string) (int64, *backends.Error) {
