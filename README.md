@@ -183,16 +183,16 @@ is prefixed with a "+" otherwise with a minus, followed by the response code.
 ### Login
 
 If a secret is set, the client has to issue the client auth command in order
-to get access to the system. Depending on the secret the capabilities may
+to get access to the system. Depending on the secret the possible commands may
 change. This is useful, to for example not allow apps to list all users.
 Generally consider use of SSL/TLS!
 
     -> client auth <secret>
-    <- + OK (user group admin)
+    <- + OK
 
 Return Codes:
 
-    OK: Ok with a list of privileges
+    OK: Ok
     EPERM: no valid secret
 
 ### General

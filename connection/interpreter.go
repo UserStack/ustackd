@@ -61,7 +61,7 @@ func (ip *Interpreter) parse(line string) {
 func (ip *Interpreter) clientAuth(passwd string) {
 	if passwd == "secret" {
 		ip.loggedin = true
-		ip.OkValue("(user group)")
+		ip.Ok()
 	} else {
 		ip.Err("EPERM")
 	}

@@ -182,13 +182,13 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 		}
 		if strings.HasPrefix(line, "- E") {
 			ret := strings.Split(line, " ")
-			return nil, &backends.Error{ret[1], "remote failure"}
+			return nil, &backends.Error{ret[1], "Remote failure"}
 		} else if strings.HasPrefix(line, "+ ") {
 			return users, nil
 		}
 		args := strings.Split(line, ":")
 		if len(args) != 2 {
-			return nil, &backends.Error{"EFAULT", "expected two values: " + line}
+			return nil, &backends.Error{"EFAULT", "Expected two values: " + line}
 		}
 		uid, perr := strconv.ParseInt(args[1], 10, 64)
 		if perr != nil {
@@ -239,7 +239,7 @@ func (client *Client) handleIntResponse() (int64, *backends.Error) {
 	}
 	ret := strings.Split(line, " ")
 	if ret[0] == "-" {
-		return 0, &backends.Error{ret[1], "remote failure"}
+		return 0, &backends.Error{ret[1], "Remote failure"}
 	}
 	val, perr := strconv.ParseInt(ret[2], 10, 64)
 	if perr != nil {
@@ -255,7 +255,7 @@ func (client *Client) handleResponse() *backends.Error {
 	}
 	ret := strings.Split(line, " ")
 	if ret[0] == "-" {
-		return &backends.Error{ret[1], "remote failure"}
+		return &backends.Error{ret[1], "Remote failure"}
 	}
 	return nil
 }

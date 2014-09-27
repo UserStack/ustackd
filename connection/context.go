@@ -47,10 +47,10 @@ func (context *Context) Log(line string) {
 }
 
 func (context *Context) Realm() {
-
-	realm := strings.Replace(context.Server.Cfg.Daemon.Realm, "$VERSION$", context.Server.App.Version, 1)
-	context.Log("new client connected")
-	context.Write(realm + " (user group)")
+	realm := strings.Replace(context.Cfg.Daemon.Realm, "$VERSION$",
+		context.App.Version, 1)
+	context.Write(realm)
+	context.Log("Client connected")
 }
 
 func (context *Context) Close() {
@@ -82,7 +82,7 @@ func (context *Context) starttls(line string) bool {
 		cert, err := tls.LoadX509KeyPair(context.Cfg.Ssl.Cert,
 			context.Cfg.Ssl.Key)
 		if err != nil {
-			context.Log("can't start tls session: " + err.Error())
+			context.Log("Can't start tls session: " + err.Error())
 			context.Err("EFAULT")
 			return true
 		}
@@ -92,7 +92,7 @@ func (context *Context) starttls(line string) bool {
 		context.conn = tls.Server(context.conn, &config)
 		context.reader = bufio.NewReader(context.conn)
 		context.writer = bufio.NewWriter(context.conn)
-		context.Log("now on secure channel")
+		context.Log("Secured channel")
 		return true
 	} else {
 		return false
