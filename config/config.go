@@ -80,8 +80,10 @@ func Read(filename string) (config Config, err error) {
 	if err != nil {
 		return
 	}
+	setDefaultsIfRequired(&cfgIntern)
 
 	config.Daemon = cfgIntern.Daemon
+
 	config.Syslog, err = translateSyslog(cfgIntern.Syslog)
 	if err != nil {
 		fmt.Println(err)
@@ -126,6 +128,11 @@ func splitAuth(clientIntern ClientIntern) (client Client, err error) {
 }
 
 func translateSyslog(syslogIntern SyslogIntern) (sys Syslog, err error) {
+	// nothing was set, use defaults
+	if syslogIntern.Level == "" && syslogIntern.Facility == "" {
+		return Syslog{syslog.LOG_DAEMON, syslog.LOG_EMERG}, nil
+	}
+
 	severities := map[string]syslog.Priority{
 		"EMERG":   syslog.LOG_EMERG,
 		"ALERT":   syslog.LOG_ALERT,
@@ -169,4 +176,25 @@ func translateSyslog(syslogIntern SyslogIntern) (sys Syslog, err error) {
 		err = fmt.Errorf("Facility \"%s\" not found.", syslogIntern.Facility)
 	}
 	return
+}
+
+func setDefaultsIfRequired(cfg *ConfigIntern) {
+	if len(cfg.Daemon.Listen) == 0 && cfg.Daemon.Realm == "" &&
+		cfg.Daemon.Backend == "" && cfg.Daemon.Pid == "" &&
+		cfg.Syslog.Level == "" && cfg.Syslog.Facility == "" {
+		// if nothing is set assume foreground
+		cfg.Daemon.Foreground = true
+	}
+	if len(cfg.Daemon.Listen) == 0 {
+		cfg.Daemon.Listen = []string{"0.0.0.0:7654"}
+	}
+	if cfg.Daemon.Realm == "" {
+		cfg.Daemon.Realm = "ustackd $VERSION$"
+	}
+	if cfg.Daemon.Backend == "" {
+		cfg.Daemon.Backend = "nil"
+	}
+	if cfg.Daemon.Pid == "" {
+		cfg.Daemon.Pid = "./ustackd.pid"
+	}
 }

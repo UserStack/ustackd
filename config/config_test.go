@@ -33,6 +33,32 @@ func TestRead(t *testing.T) {
 
 }
 
+func TestDefault(t *testing.T) {
+	cfg, err := Read("no.conf")
+
+	if err != nil {
+		t.Errorf("Failed to parse gcfg data: %s", err)
+	}
+
+	var nilString string
+	var nilInt int
+
+	expected := Config{
+		Daemon{[]string{"0.0.0.0:7654"}, "ustackd $VERSION$", "nil", "./ustackd.pid", true},
+		Syslog{syslog.LOG_DAEMON, syslog.LOG_EMERG},
+		Client{[]Auth{}},
+		Security{nilString, nilString},
+
+		Ssl{false, nilString, nilString, nilString, nilInt, nilInt},
+		Sqlite{nilString},
+		Proxy{nilString, false, nilString},
+	}
+
+	if !reflect.DeepEqual(cfg, expected) {
+		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
+	}
+}
+
 func TestReadAll(t *testing.T) {
 	cfg, err := Read("all_options.conf")
 
