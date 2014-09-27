@@ -158,9 +158,9 @@ Proxy backend implementation connects to a different ustackd and proxies request
     
     # cert that should be used by the server if not passed, all certs are allowed
     cert = config/cert.pem
-		
-		# authenticate als a certain client
-		passwd = SOMEVERYGOODSECRET
+    		
+    # authenticate as a certain client
+    passwd = SOMEVERYGOODSECRET
 
 ### nil
 
