@@ -12,10 +12,26 @@ type Interpreter struct {
 }
 
 func (ip *Interpreter) parse(line string) {
+	if !(ip.alwaysAvailableCommands(line) || ip.sensitiveCommands(line)) {
+		ip.Err("EFAULT") // command unknown
+	}
+}
+
+func (ip *Interpreter) alwaysAvailableCommands(line string) bool {
 	cmd := strings.ToLower(line)
 	if strings.HasPrefix(cmd, "client auth ") {
 		ip.clientAuth(line[12:])
-	} else if strings.HasPrefix(cmd, "login ") {
+	} else if cmd == "quit" {
+		ip.quit(line)
+	} else {
+		return false
+	}
+	return true
+}
+
+func (ip *Interpreter) sensitiveCommands(line string) bool {
+	cmd := strings.ToLower(line)
+	if strings.HasPrefix(cmd, "login ") {
 		ip.login(line[6:])
 	} else if strings.HasPrefix(cmd, "disable ") {
 		ip.disable(line[8:])
@@ -49,13 +65,12 @@ func (ip *Interpreter) parse(line string) {
 		ip.groupUsers(line[12:])
 	} else if strings.HasPrefix(cmd, "group ") {
 		ip.group(line[6:])
-	} else if cmd == "quit" {
-		ip.quit(line)
 	} else if cmd == "stats" {
-		ip.Ok()
+		ip.stats(line[5:])
 	} else {
-		ip.Err("EFAULT")
+		return false
 	}
+	return true
 }
 
 func (ip *Interpreter) clientAuth(passwd string) {
@@ -65,6 +80,10 @@ func (ip *Interpreter) clientAuth(passwd string) {
 	} else {
 		ip.Err("EPERM")
 	}
+}
+
+func (ip *Interpreter) stats(line string) {
+	ip.Ok()
 }
 
 // login <name> <password>
