@@ -8,7 +8,11 @@ prepare:
 		github.com/codegangsta/cli \
 		github.com/mattn/go-sqlite3
 
-test: clean build
+vet:
+	go get -u code.google.com/p/go.tools/cmd/vet
+	go vet ./...
+
+test: clean build vet
 	# requires started server
 	./ustackd -c config/test.conf &
 	sleep 1
