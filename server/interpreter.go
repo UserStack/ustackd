@@ -51,7 +51,7 @@ func (ip *Interpreter) sensitiveCommands(line string) bool {
 	} else if strings.HasPrefix(cmd, "change password ") {
 		ip.changePassword(line[16:])
 	} else if strings.HasPrefix(cmd, "change name ") {
-		ip.changeName(line[13:])
+		ip.changeName(line[12:])
 	} else if strings.HasPrefix(cmd, "user groups ") {
 		ip.userGroups(line[12:])
 	} else if strings.HasPrefix(cmd, "user ") {

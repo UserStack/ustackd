@@ -298,8 +298,7 @@ Return Codes:
 Return Codes:
 
     OK: Ok
-    ENOENT: name or uid unknown
-    EPERM: name and password are not a valid combination
+    ENOENT: name and password are not a valid combination
     EINVAL: Parameter missing or invalid
 
 #### Change name
@@ -310,8 +309,7 @@ Return Codes:
 Return Codes:
 
     OK: Ok
-    ENOENT: name or uid unknown
-    EPERM: name and password are not a valid combination
+    ENOENT: name and password are not a valid combination
     EINVAL: Parameter missing or invalid
 
 #### List all groups of a user

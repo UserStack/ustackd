@@ -52,6 +52,10 @@ const (
 	);`
 	GET_USER_DATA_STMT = `SELECT value FROM UserValues
 		WHERE uid = ? AND key = ?;`
+	CHANGE_USER_PASSWD_STMT = `UPDATE Users SET password = ?
+		WHERE uid = ? AND password = ?`
+	CHANGE_USER_NAME_STMT = `UPDATE Users SET name = ?
+		WHERE uid = ? AND password = ?`
 )
 
 var PREPARE = []string{
@@ -64,15 +68,17 @@ var PREPARE = []string{
 }
 
 type SqliteBackend struct {
-	db                *sql.DB
-	createUserStmt    *sql.Stmt
-	usersStmt         *sql.Stmt
-	deleteUserStmt    *sql.Stmt
-	loginUserStmt     *sql.Stmt
-	setUserStateStmt  *sql.Stmt
-	uidForNameUidStmt *sql.Stmt
-	setUserDataStmt   *sql.Stmt
-	getUserDataStmt   *sql.Stmt
+	db                     *sql.DB
+	createUserStmt         *sql.Stmt
+	usersStmt              *sql.Stmt
+	deleteUserStmt         *sql.Stmt
+	loginUserStmt          *sql.Stmt
+	setUserStateStmt       *sql.Stmt
+	uidForNameUidStmt      *sql.Stmt
+	setUserDataStmt        *sql.Stmt
+	getUserDataStmt        *sql.Stmt
+	changeUserPasswordStmt *sql.Stmt
+	changeUserNameStmt     *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
@@ -143,6 +149,14 @@ func (backend *SqliteBackend) init() error {
 		return err
 	}
 	backend.getUserDataStmt, err = backend.db.Prepare(GET_USER_DATA_STMT)
+	if err != nil {
+		return err
+	}
+	backend.changeUserPasswordStmt, err = backend.db.Prepare(CHANGE_USER_PASSWD_STMT)
+	if err != nil {
+		return err
+	}
+	backend.changeUserNameStmt, err = backend.db.Prepare(CHANGE_USER_NAME_STMT)
 	if err != nil {
 		return err
 	}
@@ -238,10 +252,52 @@ func (backend *SqliteBackend) LoginUser(name string, password string) (int64, *E
 }
 
 func (backend *SqliteBackend) ChangeUserPassword(nameuid string, password string, newpassword string) *Error {
+	if nameuid == "" || password == "" || newpassword == "" {
+		return &Error{"EINVAL", "nameuid and passwords can't be blank"}
+	}
+	uid, err := backend.getUidForNameUid(nameuid)
+	if err != nil {
+		return err
+	}
+	if uid <= 0 {
+		return &Error{"ENOENT", "Password didn't match"}
+	}
+	result, serr := backend.changeUserPasswordStmt.Exec(newpassword, uid, password)
+	if serr != nil {
+		return &Error{"EFAULT", serr.Error()}
+	}
+	count, rerr := result.RowsAffected()
+	if rerr != nil {
+		return &Error{"EFAULT", rerr.Error()}
+	}
+	if count < 1 {
+		return &Error{"ENOENT", "Password didn't match"}
+	}
 	return nil
 }
 
 func (backend *SqliteBackend) ChangeUserName(nameuid string, password string, newname string) *Error {
+	if nameuid == "" || password == "" || newname == "" {
+		return &Error{"EINVAL", "nameuid, password and new name can't be blank"}
+	}
+	uid, err := backend.getUidForNameUid(nameuid)
+	if err != nil {
+		return err
+	}
+	if uid <= 0 {
+		return &Error{"ENOENT", "Password didn't match"}
+	}
+	result, serr := backend.changeUserNameStmt.Exec(newname, uid, password)
+	if serr != nil {
+		return &Error{"EFAULT", serr.Error()}
+	}
+	count, rerr := result.RowsAffected()
+	if rerr != nil {
+		return &Error{"EFAULT", rerr.Error()}
+	}
+	if count < 1 {
+		return &Error{"ENOENT", "Password didn't match"}
+	}
 	return nil
 }
 
@@ -256,7 +312,6 @@ func (backend *SqliteBackend) DeleteUser(nameuid string) *Error {
 
 	result, err := backend.deleteUserStmt.Exec(nameuid, nameuid)
 	if err != nil {
-		// recover stmt after error
 		return &Error{"EFAULT", err.Error()}
 	}
 	count, err := result.RowsAffected()

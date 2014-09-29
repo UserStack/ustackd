@@ -170,14 +170,77 @@ func TestLoginUser(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) ChangeUserPassword(nameuid string, password string, newpassword string) *Error {
-//     return nil
-// }
-//
-// func (backend *SqliteBackend) ChangeUserName(nameuid string, password string, newname string) *Error {
-//     return nil
-// }
-//
+func TestChangeUserPassword(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	ierr1 := backend.ChangeUserPassword("", "secret2", "secret2")
+	if ierr1.Code != "EINVAL" {
+		t.Fatal("should fail since user value is empty")
+	}
+
+	ierr2 := backend.ChangeUserPassword("test@example.com", "", "secret2")
+	if ierr2.Code != "EINVAL" {
+		t.Fatal("should fail since passwd value is empty")
+	}
+
+	ierr3 := backend.ChangeUserPassword("test@example.com", "secret2", "")
+	if ierr3.Code != "EINVAL" {
+		t.Fatal("should fail since new passwd value is empty")
+	}
+
+	backend.CreateUser("test@example.com", "secret")
+	backend.LoginUser("test@example.com", "secret")
+	serr := backend.ChangeUserPassword("test@example.com", "secret2", "secret2")
+	// fails if password is wrong
+	if serr.Code != "ENOENT" {
+		t.Fatal("Should have failed to change with wrong password")
+	}
+	backend.ChangeUserPassword("test@example.com", "secret", "secret2")
+	_, err := backend.LoginUser("test@example.com", "secret2")
+	if err != nil {
+		t.Fatalf("User passwd should have been changed: %s, (%s)", err.Code, err.Message)
+	}
+}
+
+func TestChangeUserName(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	ierr1 := backend.ChangeUserName("", "secret2", "test2@example.com")
+	if ierr1.Code != "EINVAL" {
+		t.Fatal("should fail since name value is empty")
+	}
+
+	ierr2 := backend.ChangeUserName("test@example.com", "", "test2@example.com")
+	if ierr2.Code != "EINVAL" {
+		t.Fatal("should fail since passwd value is empty")
+	}
+
+	ierr3 := backend.ChangeUserName("test@example.com", "secret2", "")
+	if ierr3.Code != "EINVAL" {
+		t.Fatal("should fail since new name value is empty")
+	}
+
+	backend.CreateUser("test@example.com", "secret")
+	backend.LoginUser("test@example.com", "secret")
+	serr := backend.ChangeUserName("test@example.com", "secret2", "test2@example.com")
+	if serr.Code != "ENOENT" {
+		t.Fatal("Should have failed to change with wrong password")
+	}
+	backend.ChangeUserName("test@example.com", "secret", "test2@example.com")
+	_, err := backend.LoginUser("test2@example.com", "secret")
+	if err != nil {
+		t.Fatalf("User name should have been changed: %s, (%s)", err.Code, err.Message)
+	}
+}
+
 // func (backend *SqliteBackend) UserGroups(nameuid string) ([]Group, *Error) {
 //     return nil, nil
 // }

@@ -1,4 +1,5 @@
 PID_FILE=/tmp/ustackd-test.pid
+TEST_SERVER=./ustackd -c config/test.conf
 
 build: prepare
 	go build
@@ -14,7 +15,7 @@ vet:
 
 test: clean build vet
 	# requires started server
-	./ustackd -c config/test.conf &
+	${TEST_SERVER} &
 	sleep 1
 	go test ./...
 	ok=$$?
@@ -31,3 +32,6 @@ cert:
 clean:
 	go clean
 	rm -f ustackd.db ustackd.pid ${PID_FILE}
+
+tserver: clean build
+	${TEST_SERVER}

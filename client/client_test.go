@@ -84,6 +84,74 @@ func TestSetGetUserData(t *testing.T) {
 	}
 }
 
+func TestChangeUserPassword(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+	username := uniqUsername()
+
+	ierr1 := client.ChangeUserPassword("", "secret2", "secret2")
+	if ierr1.Code != "EINVAL" {
+		t.Fatal("should fail since user value is empty")
+	}
+
+	ierr2 := client.ChangeUserPassword(username, "", "secret2")
+	if ierr2.Code != "EINVAL" {
+		t.Fatal("should fail since passwd value is empty")
+	}
+
+	ierr3 := client.ChangeUserPassword(username, "secret2", "")
+	if ierr3.Code != "EFAULT" {
+		t.Fatal("should fail since new passwd value is empty")
+	}
+
+	client.CreateUser(username, "secret")
+	client.LoginUser(username, "secret")
+	serr := client.ChangeUserPassword(username, "secret2", "secret2")
+	// fails if password is wrong
+	if serr.Code != "ENOENT" {
+		t.Fatal("Should have failed to change with wrong password")
+	}
+	client.ChangeUserPassword(username, "secret", "secret2")
+	_, err := client.LoginUser(username, "secret2")
+	if err != nil {
+		t.Fatalf("User passwd should have been changed: %s, (%s)", err.Code, err.Message)
+	}
+}
+
+func TestChangeUserName(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+	username := uniqUsername()
+	newusername := uniqUsername()
+
+	ierr1 := client.ChangeUserName("", "secret2", newusername)
+	if ierr1.Code != "EINVAL" {
+		t.Fatal("should fail since name value is empty")
+	}
+
+	ierr2 := client.ChangeUserName(username, "", newusername)
+	if ierr2.Code != "EINVAL" {
+		t.Fatal("should fail since passwd value is empty")
+	}
+
+	ierr3 := client.ChangeUserName(username, "secret2", "")
+	if ierr3.Code != "EFAULT" {
+		t.Fatal("should fail since new name value is empty")
+	}
+
+	client.CreateUser(username, "secret")
+	client.LoginUser(username, "secret")
+	serr := client.ChangeUserName(username, "secret2", newusername)
+	if serr.Code != "ENOENT" {
+		t.Fatal("Should have failed to change with wrong password")
+	}
+	client.ChangeUserName(username, "secret", newusername)
+	_, err := client.LoginUser(newusername, "secret")
+	if err != nil {
+		t.Fatalf("User name should have been changed: %s, (%s)", err.Code, err.Message)
+	}
+}
+
 func TestLoginUser(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()

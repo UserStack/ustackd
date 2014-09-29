@@ -81,53 +81,24 @@ func (client *Client) StartTlsWithCert(cert string) error {
 }
 
 func (client *Client) ClientAuth(password string) *backends.Error {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("client auth %s", password)
-	if err != nil {
-		return &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleResponse()
+	return client.simpleCmd("client auth %s", password)
 }
 
-func (client *Client) CreateUser(name string, password string) (int64, *backends.Error) {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("user %s %s", name, password)
-	if err != nil {
-		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleIntResponse()
+func (client *Client) CreateUser(name string, password string) (uid int64, err *backends.Error) {
+	uid, err = client.simpleIntCmd("user %s %s", name, password)
+	return
 }
 
 func (client *Client) DisableUser(nameuid string) *backends.Error {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("disable %s", nameuid)
-	if err != nil {
-		return &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleResponse()
+	return client.simpleCmd("disable %s", nameuid)
 }
 
 func (client *Client) EnableUser(nameuid string) *backends.Error {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("enable %s", nameuid)
-	if err != nil {
-		return &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleResponse()
+	return client.simpleCmd("enable %s", nameuid)
 }
 
 func (client *Client) SetUserData(nameuid string, key string, value string) *backends.Error {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("set %s %s %s", nameuid, key, value)
-	if err != nil {
-		return &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleResponse()
+	return client.simpleCmd("set %s %s %s", nameuid, key, value)
 }
 
 func (client *Client) GetUserData(nameuid string, key string) (string, *backends.Error) {
@@ -149,22 +120,17 @@ func (client *Client) GetUserData(nameuid string, key string) (string, *backends
 	return line, herr
 }
 
-func (client *Client) LoginUser(name string, password string) (int64, *backends.Error) {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("login %s %s", name, password)
-	if err != nil {
-		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleIntResponse()
+func (client *Client) LoginUser(name string, password string) (uid int64, err *backends.Error) {
+	uid, err = client.simpleIntCmd("login %s %s", name, password)
+	return
 }
 
 func (client *Client) ChangeUserPassword(nameuid string, password string, newpassword string) *backends.Error {
-	return nil
+	return client.simpleCmd("change password %s %s %s", nameuid, password, newpassword)
 }
 
 func (client *Client) ChangeUserName(nameuid string, password string, newname string) *backends.Error {
-	return nil
+	return client.simpleCmd("change name %s %s %s", nameuid, password, newname)
 }
 
 func (client *Client) UserGroups(nameuid string) ([]backends.Group, *backends.Error) {
@@ -172,13 +138,7 @@ func (client *Client) UserGroups(nameuid string) ([]backends.Group, *backends.Er
 }
 
 func (client *Client) DeleteUser(nameuid string) *backends.Error {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("delete user %s", nameuid)
-	if err != nil {
-		return &backends.Error{Code: "EFAULT", Message: err.Error()}
-	}
-	return client.handleResponse()
+	return client.simpleCmd("delete user %s", nameuid)
 }
 
 func (client *Client) Users() ([]backends.User, *backends.Error) {
@@ -273,4 +233,24 @@ func (client *Client) handleResponse() *backends.Error {
 		return &backends.Error{Code: ret[1], Message: "Remote failure"}
 	}
 	return nil
+}
+
+func (client *Client) simpleCmd(format string, args ...interface{}) *backends.Error {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	_, err := client.Text.Cmd(format, args...)
+	if err != nil {
+		return &backends.Error{Code: "EFAULT", Message: err.Error()}
+	}
+	return client.handleResponse()
+}
+
+func (client *Client) simpleIntCmd(format string, args ...interface{}) (int64, *backends.Error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	_, err := client.Text.Cmd(format, args...)
+	if err != nil {
+		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
+	}
+	return client.handleIntResponse()
 }
