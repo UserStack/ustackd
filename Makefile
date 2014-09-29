@@ -8,9 +8,9 @@ prepare:
 		github.com/codegangsta/cli \
 		github.com/mattn/go-sqlite3
 
-test:
+test: clean build
 	# requires started server
-	go run ustackd.go -f &
+	./ustackd -f &
 	sleep 1
 	go test ./...
 	ok=$$?
@@ -25,4 +25,5 @@ cert:
 	openssl rsa -in config/key.pem -out config/key.pem
 
 clean:
-	rm -f ustackd ustackd.db ustackd.pid
+	go clean
+	rm -f ustackd.db ustackd.pid

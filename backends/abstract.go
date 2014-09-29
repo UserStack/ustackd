@@ -5,8 +5,8 @@ import (
 )
 
 type User struct {
-	Uid  int64
-	Name string
+	Uid    int64
+	Name   string
 	Active bool
 }
 

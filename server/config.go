@@ -1,4 +1,4 @@
-package config
+package server
 
 import (
 	"code.google.com/p/gcfg"

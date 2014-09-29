@@ -1,23 +1,21 @@
-package connection
+package server
 
 import (
 	"bufio"
 	"crypto/tls"
 	"net"
 	"strings"
-
-	"github.com/UserStack/ustackd/server"
 )
 
 type Context struct {
 	conn   net.Conn
 	reader *bufio.Reader
 	writer *bufio.Writer
-	*server.Server
+	*Server
 	quitting bool
 }
 
-func NewContext(conn net.Conn, server *server.Server) *Context {
+func NewContext(conn net.Conn, server *Server) *Context {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 	return &Context{conn, reader, writer, server, false}

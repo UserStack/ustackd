@@ -1,4 +1,4 @@
-package connection
+package server
 
 import (
 	"fmt"
@@ -6,12 +6,11 @@ import (
 	"strings"
 
 	"github.com/UserStack/ustackd/backends"
-	"github.com/UserStack/ustackd/config"
 )
 
 type Interpreter struct {
 	*Context
-	auth   *config.Auth
+	auth   *Auth
 	regexp *regexp.Regexp
 }
 

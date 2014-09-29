@@ -1,4 +1,4 @@
-package config
+package server
 
 import (
 	"log/syslog"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	cfg, err := Read("ustackd.conf")
+	cfg, err := Read("../config/ustackd.conf")
 
 	if err != nil {
 		t.Errorf("Failed to parse gcfg data: %s", err)
@@ -33,7 +33,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestDefault(t *testing.T) {
-	cfg, err := Read("no.conf")
+	cfg, err := Read("../config/no.conf")
 
 	if err != nil {
 		t.Errorf("Failed to parse gcfg data: %s", err)
@@ -58,7 +58,7 @@ func TestDefault(t *testing.T) {
 }
 
 func TestReadAll(t *testing.T) {
-	cfg, err := Read("all_options.conf")
+	cfg, err := Read("../config/all_options.conf")
 
 	if err != nil {
 		t.Errorf("Failed to parse gcfg data: %s", err)
@@ -92,12 +92,12 @@ func TestReadAll(t *testing.T) {
 }
 
 func TestNoFile(t *testing.T) {
-	_, err := Read("bla.conf")
+	_, err := Read("../config/bla.conf")
 
 	if err == nil {
 		t.Errorf("Failed to fail for non-existent file")
 	}
-	expectedFileNotFoundError := "open bla.conf: no such file or directory"
+	expectedFileNotFoundError := "open ../config/bla.conf: no such file or directory"
 	if err.Error() != expectedFileNotFoundError {
 		t.Errorf("Got error: %s, but expected %s, ", err.Error(), expectedFileNotFoundError)
 	}

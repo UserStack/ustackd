@@ -209,8 +209,8 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 			return nil, &backends.Error{"EFAULT", perr.Error()}
 		}
 		users = append(users, backends.User{
-			Uid:  uid,
-			Name: args[0],
+			Uid:    uid,
+			Name:   args[0],
 			Active: (args[2] == "Y"),
 		})
 	}
