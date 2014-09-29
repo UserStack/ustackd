@@ -35,13 +35,13 @@ func (server *Server) Run(c *cli.Context) {
 		cfg.Daemon.Foreground = true
 	}
 
-	logger, err := server.SetupLogger()
+	logger, err := server.setupLogger()
 	if err != nil {
 		fmt.Printf("Unable to connect to syslog: %s\n", err)
 		return
 	}
 
-	if err = server.Demonize(); err != nil {
+	if err = server.demonize(); err != nil {
 		logger.Printf("Unable to demonize: %s\n", err)
 		return
 	}
@@ -54,13 +54,13 @@ func (server *Server) Run(c *cli.Context) {
 	}
 	logger.Printf("ustackd listenting on " + bindAddress + "\n")
 
-	if err = server.SetupBackend(); err != nil {
+	if err = server.setupBackend(); err != nil {
 		logger.Printf("Setup Backend: %s\n", err)
 		return
 	}
 
 	isRunning := true
-	go server.CheckSignal(&isRunning, listener.Close)
+	go server.checkSignal(&isRunning, listener.Close)
 
 	for isRunning {
 		conn, err := listener.Accept()
@@ -73,7 +73,7 @@ func (server *Server) Run(c *cli.Context) {
 	logger.Println("Shutdown server")
 }
 
-func (server *Server) SetupLogger() (logger *log.Logger, err error) {
+func (server *Server) setupLogger() (logger *log.Logger, err error) {
 	flags := log.LstdFlags | log.Lmicroseconds
 	if server.Cfg.Daemon.Foreground {
 		logger = log.New(os.Stdout, "", flags)
@@ -84,41 +84,52 @@ func (server *Server) SetupLogger() (logger *log.Logger, err error) {
 	return
 }
 
-func (server *Server) SetupBackend() (err error) {
+func (server *Server) setupBackend() (err error) {
 	// get the right backend for the configuration
-	cfg := server.Cfg
-	switch cfg.Daemon.Backend {
+	switch server.Cfg.Daemon.Backend {
 	case "sqlite":
-		sqlite, err := backends.NewSqliteBackend(cfg.Sqlite.Url)
-		if err != nil {
-			err = fmt.Errorf("Unable to open sqlite at %s: %s\n", cfg.Sqlite.Url, err)
-		}
-		server.Backend = &sqlite
+		err = server.setupSqlite()
 	case "proxy":
-		proxy, err := client.Dial(cfg.Proxy.Host)
-		if err != nil {
-			err = fmt.Errorf("Unable to connect to %s: %s\n", cfg.Proxy.Host, err)
-		}
-		if cfg.Proxy.Ssl {
-			if len(cfg.Proxy.Cert) > 0 {
-				err = proxy.StartTlsWithoutCertCheck()
-			} else {
-				err = proxy.StartTlsWithCert(cfg.Proxy.Cert)
-			}
-		}
-		if err != nil {
-			err = fmt.Errorf("Unable to open proxy for %s: %s\n", cfg.Proxy.Host, err)
-		}
-		if len(cfg.Proxy.Passwd) > 0 { // if passwd given
-			if perr := proxy.ClientAuth(cfg.Proxy.Passwd); perr != nil {
-				err = fmt.Errorf("Unable to authenticate with %s: %s\n", cfg.Proxy.Host, perr.Code)
-			}
-		}
-		server.Backend = proxy
+		err = server.setupProxy()
 	case "nil":
 		server.Backend = &backends.NilBackend{}
 	default:
-		err = fmt.Errorf("Unkown backend: %s\n", cfg.Daemon.Backend)
+		err = fmt.Errorf("Unkown backend: %s\n", server.Cfg.Daemon.Backend)
 	}
+	return
+}
+
+func (server *Server) setupSqlite() (err error) {
+	sqlite, err := backends.NewSqliteBackend(server.Cfg.Sqlite.Url)
+	if err != nil {
+		err = fmt.Errorf("Unable to open sqlite at %s: %s\n", server.Cfg.Sqlite.Url, err)
+	}
+	server.Backend = &sqlite
+	return
+}
+
+func (server *Server) setupProxy() (err error) {
+	cfg := server.Cfg
+	proxy, err := client.Dial(cfg.Proxy.Host)
+	if err != nil {
+		err = fmt.Errorf("Unable to connect to %s: %s\n", cfg.Proxy.Host, err)
+	}
+	if cfg.Proxy.Ssl {
+		if len(cfg.Proxy.Cert) > 0 {
+			err = proxy.StartTlsWithoutCertCheck()
+		} else {
+			err = proxy.StartTlsWithCert(cfg.Proxy.Cert)
+		}
+	}
+
+	if err != nil {
+		err = fmt.Errorf("Unable to open proxy for %s: %s\n", cfg.Proxy.Host, err)
+	}
+	if len(cfg.Proxy.Passwd) > 0 { // if passwd given
+		if perr := proxy.ClientAuth(cfg.Proxy.Passwd); perr != nil {
+			err = fmt.Errorf("Unable to authenticate with %s: %s\n", cfg.Proxy.Host, perr.Code)
+		}
+	}
+	server.Backend = proxy
 	return
 }

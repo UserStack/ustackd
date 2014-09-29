@@ -12,7 +12,7 @@ import (
 	"syscall"
 )
 
-func (server *Server) Demonize() (err error) {
+func (server *Server) demonize() (err error) {
 	chrootPath := server.Cfg.Security.Chroot
 	if chrootPath != "" {
 		if err = server.chroot(chrootPath); err != nil {
@@ -129,7 +129,7 @@ func (server *Server) writePidFile(pidFile string) {
 	}
 }
 
-func (server *Server) CheckSignal(isRunning *bool, cb func() error) {
+func (server *Server) checkSignal(isRunning *bool, cb func() error) {
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, os.Kill)
 	<-channel //Block until a signal is received
