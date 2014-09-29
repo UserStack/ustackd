@@ -47,25 +47,25 @@ func (server *Server) Run(args []string) {
 	server.App.Run(os.Args)
 }
 
-func (server *Server) RunContext(c *cli.Context) {
+func (s *Server) RunContext(c *cli.Context) {
 	cfg, err := Read(c.String("config"))
 	if err != nil {
 		fmt.Printf("Unable read config file: %s\n", err)
 		return
 	}
-	server.Cfg = &cfg
+	s.Cfg = &cfg
 
 	if c.Bool("foreground") {
 		cfg.Daemon.Foreground = true
 	}
 
-	logger, err := server.setupLogger()
+	logger, err := s.setupLogger()
 	if err != nil {
 		fmt.Printf("Unable to connect to syslog: %s\n", err)
 		return
 	}
 
-	if err = server.demonize(); err != nil {
+	if err = s.demonize(); err != nil {
 		logger.Printf("Unable to demonize: %s\n", err)
 		return
 	}
@@ -78,20 +78,19 @@ func (server *Server) RunContext(c *cli.Context) {
 	}
 	logger.Printf("ustackd listenting on " + bindAddress + "\n")
 
-	if err = server.setupBackend(); err != nil {
+	if err = s.setupBackend(); err != nil {
 		logger.Printf("Setup Backend: %s\n", err)
 		return
 	}
 
-	go server.checkSignal(server.Stop)
-
+	go s.checkSignal(server.Stop)
 	for server.running {
 		conn, err := server.listener.Accept()
 		if err != nil && server.running {
 			logger.Printf("Can't accept connection: %s\n", err)
 			continue
 		}
-		go NewContext(conn, server).Handle()
+		go NewContext(conn, s).Handle()
 	}
 	logger.Println("Shutdown server")
 }
@@ -101,63 +100,66 @@ func (server *Server) Stop() error {
 	return server.listener.Close()
 }
 
-func (server *Server) setupLogger() (logger *log.Logger, err error) {
+func (s *Server) setupLogger() (logger *log.Logger, err error) {
+
 	flags := log.LstdFlags | log.Lmicroseconds
-	if server.Cfg.Daemon.Foreground {
+	if s.Cfg.Daemon.Foreground {
 		logger = log.New(os.Stdout, "", flags)
 	} else {
-		logger, err = syslog.NewLogger(server.Cfg.Syslog.Severity|server.Cfg.Syslog.Facility, flags)
+		logger, err = syslog.NewLogger(s.Cfg.Syslog.Severity|s.Cfg.Syslog.Facility, flags)
 	}
-	server.Logger = logger
+	s.Logger = logger
 	return
 }
 
-func (server *Server) setupBackend() (err error) {
+func (s *Server) setupBackend() (err error) {
 	// get the right backend for the configuration
-	switch server.Cfg.Daemon.Backend {
+	switch s.Cfg.Daemon.Backend {
 	case "sqlite":
-		err = server.setupSqlite()
+		err = s.setupSqlite()
 	case "proxy":
-		err = server.setupProxy()
+		err = s.setupProxy()
 	case "nil":
-		server.Backend = &backends.NilBackend{}
+		s.Backend = &backends.NilBackend{}
 	default:
-		err = fmt.Errorf("Unkown backend: %s\n", server.Cfg.Daemon.Backend)
+		err = fmt.Errorf("Unknown backend: %s\n", s.Cfg.Daemon.Backend)
 	}
 	return
 }
 
-func (server *Server) setupSqlite() (err error) {
-	sqlite, err := backends.NewSqliteBackend(server.Cfg.Sqlite.Url)
+func (s *Server) setupSqlite() (err error) {
+	sqlite, err := backends.NewSqliteBackend(s.Cfg.Sqlite.Url)
 	if err != nil {
-		err = fmt.Errorf("Unable to open sqlite at %s: %s\n", server.Cfg.Sqlite.Url, err)
+		err = fmt.Errorf("Unable to open sqlite at %s: %s\n", s.Cfg.Sqlite.Url, err)
 	}
-	server.Backend = &sqlite
+	s.Backend = &sqlite
 	return
 }
 
-func (server *Server) setupProxy() (err error) {
-	cfg := server.Cfg
-	proxy, err := client.Dial(cfg.Proxy.Host)
+func (s *Server) setupProxy() (err error) {
+	Proxy := s.Cfg.Proxy
+	proxy, err := client.Dial(Proxy.Host)
 	if err != nil {
-		err = fmt.Errorf("Unable to connect to %s: %s\n", cfg.Proxy.Host, err)
+		err = fmt.Errorf("Unable to connect to %s: %s\n", Proxy.Host, err)
+		return
 	}
-	if cfg.Proxy.Ssl {
-		if len(cfg.Proxy.Cert) > 0 {
+	if Proxy.Ssl {
+		if len(Proxy.Cert) > 0 {
 			err = proxy.StartTlsWithoutCertCheck()
 		} else {
-			err = proxy.StartTlsWithCert(cfg.Proxy.Cert)
+			err = proxy.StartTlsWithCert(Proxy.Cert)
+		}
+		if err != nil {
+			err = fmt.Errorf("Unable to open proxy for %s: %s\n", Proxy.Host, err)
+			return
 		}
 	}
 
-	if err != nil {
-		err = fmt.Errorf("Unable to open proxy for %s: %s\n", cfg.Proxy.Host, err)
-	}
-	if len(cfg.Proxy.Passwd) > 0 { // if passwd given
-		if perr := proxy.ClientAuth(cfg.Proxy.Passwd); perr != nil {
-			err = fmt.Errorf("Unable to authenticate with %s: %s\n", cfg.Proxy.Host, perr.Code)
+	if len(Proxy.Passwd) > 0 { // if passwd given
+		if perr := proxy.ClientAuth(Proxy.Passwd); perr != nil {
+			err = fmt.Errorf("Unable to authenticate with %s: %s\n", Proxy.Host, perr.Code)
 		}
 	}
-	server.Backend = proxy
+	s.Backend = proxy
 	return
 }
