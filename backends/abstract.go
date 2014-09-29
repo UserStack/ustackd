@@ -7,10 +7,17 @@ import (
 type User struct {
 	Uid  int64
 	Name string
+	Active bool
 }
 
 func (u User) String() string {
-	return fmt.Sprintf("%s:%d", u.Name, u.Uid)
+	var active rune
+	if u.Active {
+		active = 'Y'
+	} else {
+		active = 'N'
+	}
+	return fmt.Sprintf("%s:%d:%c", u.Name, u.Uid, active)
 }
 
 type Group struct {

@@ -201,8 +201,8 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 			return users, nil
 		}
 		args := strings.Split(line, ":")
-		if len(args) != 2 {
-			return nil, &backends.Error{"EFAULT", "Expected two values: " + line}
+		if len(args) != 3 {
+			return nil, &backends.Error{"EFAULT", "Expected three values: " + line}
 		}
 		uid, perr := strconv.ParseInt(args[1], 10, 64)
 		if perr != nil {
@@ -211,6 +211,7 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 		users = append(users, backends.User{
 			Uid:  uid,
 			Name: args[0],
+			Active: (args[2] == "Y"),
 		})
 	}
 }

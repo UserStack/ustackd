@@ -37,7 +37,7 @@ const (
 	) VALUES (
 		?, ?
 	);`
-	USERS_STMT       = `SELECT name, uid FROM Users`
+	USERS_STMT       = `SELECT name, uid, state FROM Users`
 	DELETE_USER_STMT = `DELETE FROM Users WHERE uid = ? OR name = ?;`
 	LOGIN_USER_STMT  = `SELECT uid FROM Users
 		WHERE name = ? AND password = ? AND state = %d;`
@@ -280,11 +280,12 @@ func (backend *SqliteBackend) Users() ([]User, *Error) {
 	for rows.Next() {
 		var uid int64
 		var name string
-		err = rows.Scan(&name, &uid)
+		var state int
+		err = rows.Scan(&name, &uid, &state)
 		if err != nil {
 			return nil, &Error{"EFAULT", err.Error()}
 		}
-		users = append(users, User{uid, name})
+		users = append(users, User{uid, name, state == STATUS_ACTIVE})
 	}
 	return users, nil
 }

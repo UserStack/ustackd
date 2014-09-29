@@ -345,14 +345,14 @@ Return Codes:
 #### All users
 
     -> users
-    <- foo@bar.com:1
-    <- bar@example.com:2
-    <- mr@bean.com:3
+    <- foo@bar.com:1:Y
+    <- bar@example.com:2:Y
+    <- mr@bean.com:3:N
     <- + OK
 
 Format:
 
-    List of names with user id: <name>:<uid>
+    List of names with user id: <name>:<uid>:<active Y=yes, N=no>
 
 Return Codes:
 
@@ -420,14 +420,14 @@ Return Codes:
 #### Users of a group
 
     -> group users <group|gid>
-    <- foo@bar.com:1
-    <- bar@example.com:2
-    <- mr@bean.com:3
+    <- foo@bar.com:1:Y
+    <- bar@example.com:2:N
+    <- mr@bean.com:3:Y
     <- + OK
 
 Format:
 
-    List of names with user id: <name>:<uid>
+    List of names with user id: <name>:<uid>:<active Y=yes, N=no>
 
 Return Codes:
 
