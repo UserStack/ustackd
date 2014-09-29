@@ -8,7 +8,7 @@ prepare:
 		github.com/codegangsta/cli \
 		github.com/mattn/go-sqlite3
 
-test: clean build
+test: clean build vet
 	# requires started server
 	./ustackd -f &
 	sleep 1
@@ -19,6 +19,10 @@ test: clean build
 
 fmt:
 	go fmt ./...
+
+vet:
+	go get -u code.google.com/p/go.tools/cmd/vet
+	go vet ./...
 
 cert:
 	openssl req -x509 -newkey rsa:2048 -keyout config/key.pem -out config/cert.pem -days 365

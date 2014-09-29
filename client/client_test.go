@@ -145,7 +145,7 @@ func TestUsers(t *testing.T) {
 		}
 	}
 	if found0 && found1 != true {
-		t.Fatal("should have found created users %s and %s in %s",
+		t.Fatalf("should have found created users %s and %s in %v",
 			username0, username1, users)
 	}
 }

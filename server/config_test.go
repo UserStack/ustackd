@@ -27,7 +27,7 @@ func TestRead(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
-		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
+		t.Errorf("Config is expected to be %v, but is %v", expected, cfg)
 	}
 
 }
@@ -53,7 +53,7 @@ func TestDefault(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
-		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
+		t.Errorf("Config is expected to be %v, but is %v", expected, cfg)
 	}
 }
 
@@ -87,7 +87,7 @@ func TestReadAll(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(cfg, expected) {
-		t.Errorf("Config is expected to be %s, but is %s", expected, cfg)
+		t.Errorf("Config is expected to be %v, but is %v", expected, cfg)
 	}
 }
 
@@ -99,7 +99,7 @@ func TestNoFile(t *testing.T) {
 	}
 	expectedFileNotFoundError := "open ../config/bla.conf: no such file or directory"
 	if err.Error() != expectedFileNotFoundError {
-		t.Errorf("Got error: %s, but expected %s, ", err.Error(), expectedFileNotFoundError)
+		t.Errorf("Got error: %v, but expected %v, ", err.Error(), expectedFileNotFoundError)
 	}
 }
 

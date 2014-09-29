@@ -85,7 +85,7 @@ func (client *Client) ClientAuth(password string) *backends.Error {
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("client auth %s", password)
 	if err != nil {
-		return &backends.Error{"EFAULT", err.Error()}
+		return &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleResponse()
 }
@@ -95,7 +95,7 @@ func (client *Client) CreateUser(name string, password string) (int64, *backends
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("user %s %s", name, password)
 	if err != nil {
-		return 0, &backends.Error{"EFAULT", err.Error()}
+		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleIntResponse()
 }
@@ -105,7 +105,7 @@ func (client *Client) DisableUser(nameuid string) *backends.Error {
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("disable %s", nameuid)
 	if err != nil {
-		return &backends.Error{"EFAULT", err.Error()}
+		return &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleResponse()
 }
@@ -115,7 +115,7 @@ func (client *Client) EnableUser(nameuid string) *backends.Error {
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("enable %s", nameuid)
 	if err != nil {
-		return &backends.Error{"EFAULT", err.Error()}
+		return &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleResponse()
 }
@@ -125,7 +125,7 @@ func (client *Client) SetUserData(nameuid string, key string, value string) *bac
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("set %s %s %s", nameuid, key, value)
 	if err != nil {
-		return &backends.Error{"EFAULT", err.Error()}
+		return &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleResponse()
 }
@@ -135,15 +135,15 @@ func (client *Client) GetUserData(nameuid string, key string) (string, *backends
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("get %s %s", nameuid, key)
 	if err != nil {
-		return "", &backends.Error{"EFAULT", err.Error()}
+		return "", &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	line, rerr := client.Text.ReadLine()
 	if rerr != nil {
-		return "", &backends.Error{"EFAULT", rerr.Error()}
+		return "", &backends.Error{Code: "EFAULT", Message: rerr.Error()}
 	}
 	if strings.HasPrefix(line, "- E") {
 		ret := strings.Split(line, " ")
-		return "", &backends.Error{ret[1], "remote failure"}
+		return "", &backends.Error{Code: ret[1], Message: "remote failure"}
 	}
 	herr := client.handleResponse()
 	return line, herr
@@ -154,7 +154,7 @@ func (client *Client) LoginUser(name string, password string) (int64, *backends.
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("login %s %s", name, password)
 	if err != nil {
-		return 0, &backends.Error{"EFAULT", err.Error()}
+		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleIntResponse()
 }
@@ -176,7 +176,7 @@ func (client *Client) DeleteUser(nameuid string) *backends.Error {
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("delete user %s", nameuid)
 	if err != nil {
-		return &backends.Error{"EFAULT", err.Error()}
+		return &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleResponse()
 }
@@ -186,27 +186,27 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 	defer client.mutex.Unlock()
 	_, err := client.Text.Cmd("users")
 	if err != nil {
-		return nil, &backends.Error{"EFAULT", err.Error()}
+		return nil, &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	var users []backends.User
 	for {
 		line, rerr := client.Text.ReadLine()
 		if rerr != nil {
-			return nil, &backends.Error{"EFAULT", rerr.Error()}
+			return nil, &backends.Error{Code: "EFAULT", Message: rerr.Error()}
 		}
 		if strings.HasPrefix(line, "- E") {
 			ret := strings.Split(line, " ")
-			return nil, &backends.Error{ret[1], "Remote failure"}
+			return nil, &backends.Error{Code: ret[1], Message: "Remote failure"}
 		} else if strings.HasPrefix(line, "+ ") {
 			return users, nil
 		}
 		args := strings.Split(line, ":")
 		if len(args) != 3 {
-			return nil, &backends.Error{"EFAULT", "Expected three values: " + line}
+			return nil, &backends.Error{Code: "EFAULT", Message: "Expected three values: " + line}
 		}
 		uid, perr := strconv.ParseInt(args[1], 10, 64)
 		if perr != nil {
-			return nil, &backends.Error{"EFAULT", perr.Error()}
+			return nil, &backends.Error{Code: "EFAULT", Message: perr.Error()}
 		}
 		users = append(users, backends.User{
 			Uid:    uid,
@@ -250,15 +250,15 @@ func (client *Client) Close() {
 func (client *Client) handleIntResponse() (int64, *backends.Error) {
 	line, rerr := client.Text.ReadLine()
 	if rerr != nil {
-		return 0, &backends.Error{"EFAULT", rerr.Error()}
+		return 0, &backends.Error{Code: "EFAULT", Message: rerr.Error()}
 	}
 	ret := strings.Split(line, " ")
 	if ret[0] == "-" {
-		return 0, &backends.Error{ret[1], "Remote failure"}
+		return 0, &backends.Error{Code: ret[1], Message: "Remote failure"}
 	}
 	val, perr := strconv.ParseInt(ret[2], 10, 64)
 	if perr != nil {
-		return 0, &backends.Error{"EFAULT", perr.Error()}
+		return 0, &backends.Error{Code: "EFAULT", Message: perr.Error()}
 	}
 	return val, nil
 }
@@ -266,11 +266,11 @@ func (client *Client) handleIntResponse() (int64, *backends.Error) {
 func (client *Client) handleResponse() *backends.Error {
 	line, rerr := client.Text.ReadLine()
 	if rerr != nil {
-		return &backends.Error{"EFAULT", rerr.Error()}
+		return &backends.Error{Code: "EFAULT", Message: rerr.Error()}
 	}
 	ret := strings.Split(line, " ")
 	if ret[0] == "-" {
-		return &backends.Error{ret[1], "Remote failure"}
+		return &backends.Error{Code: ret[1], Message: "Remote failure"}
 	}
 	return nil
 }
