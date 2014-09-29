@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/signal"
 	"os/user"
 	"strconv"
 	"strings"
@@ -127,12 +126,4 @@ func (server *Server) writePidFile(pidFile string) {
 		pid := os.Getpid()
 		file.WriteString(strconv.Itoa(pid))
 	}
-}
-
-func (server *Server) checkSignal(cb func() error) {
-	channel := make(chan os.Signal, 1)
-	signal.Notify(channel, os.Interrupt, os.Kill)
-	<-channel //Block until a signal is received
-	os.Remove(server.Cfg.Daemon.Pid)
-	cb()
 }

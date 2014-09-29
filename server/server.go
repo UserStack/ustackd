@@ -6,6 +6,7 @@ import (
 	"log/syslog"
 	"net"
 	"os"
+	"os/signal"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/client"
@@ -13,12 +14,12 @@ import (
 )
 
 type Server struct {
-	Logger   *log.Logger
-	Cfg      *Config
-	Backend  backends.Abstract
-	App      *cli.App
-	running  bool
-	listener net.Listener
+	Logger    *log.Logger
+	Cfg       *Config
+	Backend   backends.Abstract
+	App       *cli.App
+	running   bool
+	listeners []net.Listener
 }
 
 func NewServer() *Server {
@@ -40,11 +41,11 @@ func NewServer() *Server {
 	return &Server{App: app, running: true}
 }
 
-func (server *Server) Run(args []string) {
-	server.App.Action = func(c *cli.Context) {
-		server.RunContext(c)
+func (s *Server) Run(args []string) {
+	s.App.Action = func(c *cli.Context) {
+		s.RunContext(c)
 	}
-	server.App.Run(os.Args)
+	s.App.Run(os.Args)
 }
 
 func (s *Server) RunContext(c *cli.Context) {
@@ -70,38 +71,43 @@ func (s *Server) RunContext(c *cli.Context) {
 		return
 	}
 
-	bindAddress := cfg.Daemon.Listen[0]
-	server.listener, err = net.Listen("tcp", bindAddress)
-	if err != nil {
-		logger.Printf("Unable to listen: %s\n", err)
-		return
-	}
-	logger.Printf("ustackd listenting on " + bindAddress + "\n")
-
 	if err = s.setupBackend(); err != nil {
 		logger.Printf("Setup Backend: %s\n", err)
 		return
 	}
 
-	go s.checkSignal(server.Stop)
-	for server.running {
-		conn, err := server.listener.Accept()
-		if err != nil && server.running {
-			logger.Printf("Can't accept connection: %s\n", err)
-			continue
+	connChan := make(chan net.Conn)
+	if err = s.setupListeners(connChan); err != nil {
+		logger.Printf("Setup Listeners: %s\n", err)
+		return
+	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, os.Kill)
+
+	for s.running {
+		select {
+		case <-sigChan:
+			s.Stop()
+		case conn := <-connChan:
+			go NewContext(conn, s).Handle()
 		}
-		go NewContext(conn, s).Handle()
 	}
 	logger.Println("Shutdown server")
 }
 
-func (server *Server) Stop() error {
-	server.running = false
-	return server.listener.Close()
+func (s *Server) Stop() (err error) {
+	os.Remove(s.Cfg.Daemon.Pid)
+	s.running = false
+	for _, listener := range s.listeners {
+		if err = listener.Close(); err != nil {
+			return
+		}
+	}
+	return
 }
 
 func (s *Server) setupLogger() (logger *log.Logger, err error) {
-
 	flags := log.LstdFlags | log.Lmicroseconds
 	if s.Cfg.Daemon.Foreground {
 		logger = log.New(os.Stdout, "", flags)
@@ -161,5 +167,31 @@ func (s *Server) setupProxy() (err error) {
 		}
 	}
 	s.Backend = proxy
+	return
+}
+
+func (s *Server) setupListeners(connChan chan net.Conn) (err error) {
+	s.listeners = make([]net.Listener, len(s.Cfg.Daemon.Listen))
+	for i, bindAddress := range s.Cfg.Daemon.Listen {
+		listener, lerr := net.Listen("tcp", bindAddress)
+		if lerr != nil {
+			err = fmt.Errorf("Unable to listen: %s\n", lerr)
+			return
+		}
+		s.Logger.Printf("ustackd listenting on " + bindAddress + "\n")
+
+		go (func() {
+			for {
+				conn, err := listener.Accept()
+				if err != nil && s.running {
+					s.Logger.Printf("Can't accept connection: %s\n", err)
+					continue
+				}
+				connChan <- conn
+			}
+		})()
+
+		s.listeners[i] = listener
+	}
 	return
 }
