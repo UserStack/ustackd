@@ -129,11 +129,10 @@ func (server *Server) writePidFile(pidFile string) {
 	}
 }
 
-func (server *Server) checkSignal(isRunning *bool, cb func() error) {
+func (server *Server) checkSignal(cb func() error) {
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, os.Kill)
 	<-channel //Block until a signal is received
 	os.Remove(server.Cfg.Daemon.Pid)
-	*isRunning = false
 	cb()
 }

@@ -13,17 +13,41 @@ import (
 )
 
 type Server struct {
-	Logger  *log.Logger
-	Cfg     *Config
-	Backend backends.Abstract
-	App     *cli.App
+	Logger   *log.Logger
+	Cfg      *Config
+	Backend  backends.Abstract
+	App      *cli.App
+	running  bool
+	listener net.Listener
 }
 
-func NewServer(app *cli.App) *Server {
-	return &Server{App: app}
+func NewServer() *Server {
+	app := cli.NewApp()
+	app.Name = "ustackd"
+	app.Usage = "the UserStack daemon"
+	app.Version = "0.0.1"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "config, c",
+			Value: "config/ustackd.conf",
+			Usage: "the path of the main configuration file",
+		},
+		cli.BoolFlag{
+			Name:  "foreground, f",
+			Usage: "if the app should run in foreground or not",
+		},
+	}
+	return &Server{App: app, running: true}
 }
 
-func (server *Server) Run(c *cli.Context) {
+func (server *Server) Run(args []string) {
+	server.App.Action = func(c *cli.Context) {
+		server.RunContext(c)
+	}
+	server.App.Run(os.Args)
+}
+
+func (server *Server) RunContext(c *cli.Context) {
 	cfg, err := Read(c.String("config"))
 	if err != nil {
 		fmt.Printf("Unable read config file: %s\n", err)
@@ -47,7 +71,7 @@ func (server *Server) Run(c *cli.Context) {
 	}
 
 	bindAddress := cfg.Daemon.Listen[0]
-	listener, err := net.Listen("tcp", bindAddress)
+	server.listener, err = net.Listen("tcp", bindAddress)
 	if err != nil {
 		logger.Printf("Unable to listen: %s\n", err)
 		return
@@ -59,18 +83,22 @@ func (server *Server) Run(c *cli.Context) {
 		return
 	}
 
-	isRunning := true
-	go server.checkSignal(&isRunning, listener.Close)
+	go server.checkSignal(server.Stop)
 
-	for isRunning {
-		conn, err := listener.Accept()
-		if err != nil && isRunning {
+	for server.running {
+		conn, err := server.listener.Accept()
+		if err != nil && server.running {
 			logger.Printf("Can't accept connection: %s\n", err)
 			continue
 		}
 		go NewContext(conn, server).Handle()
 	}
 	logger.Println("Shutdown server")
+}
+
+func (server *Server) Stop() error {
+	server.running = false
+	return server.listener.Close()
 }
 
 func (server *Server) setupLogger() (logger *log.Logger, err error) {

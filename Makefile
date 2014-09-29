@@ -1,4 +1,4 @@
-PID_FILE=./ustackd.pid
+PID_FILE=/tmp/ustackd-test.pid
 
 build: prepare
 	go build
@@ -8,9 +8,9 @@ prepare:
 		github.com/codegangsta/cli \
 		github.com/mattn/go-sqlite3
 
-test: clean build vet
+test: clean build
 	# requires started server
-	./ustackd -f &
+	./ustackd -c config/test.conf &
 	sleep 1
 	go test ./...
 	ok=$$?
@@ -20,14 +20,10 @@ test: clean build vet
 fmt:
 	go fmt ./...
 
-vet:
-	go get -u code.google.com/p/go.tools/cmd/vet
-	go vet ./...
-
 cert:
 	openssl req -x509 -newkey rsa:2048 -keyout config/key.pem -out config/cert.pem -days 365
 	openssl rsa -in config/key.pem -out config/key.pem
 
 clean:
 	go clean
-	rm -f ustackd.db ustackd.pid
+	rm -f ustackd.db ustackd.pid ${PID_FILE}
