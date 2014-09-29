@@ -110,8 +110,7 @@ func (server *Server) SetupBackend() (err error) {
 			err = fmt.Errorf("Unable to open proxy for %s: %s\n", cfg.Proxy.Host, err)
 		}
 		if len(cfg.Proxy.Passwd) > 0 { // if passwd given
-			perr := proxy.ClientAuth(cfg.Proxy.Passwd)
-			if perr != nil {
+			if perr := proxy.ClientAuth(cfg.Proxy.Passwd); perr != nil {
 				err = fmt.Errorf("Unable to authenticate with %s: %s\n", cfg.Proxy.Host, perr.Code)
 			}
 		}
