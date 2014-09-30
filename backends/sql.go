@@ -3,6 +3,7 @@ package backends
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -30,6 +31,7 @@ type SqlBackend struct {
 	addUserToGroupStmt      *sql.Stmt
 	removeUserFromGroupStmt *sql.Stmt
 	groupUsersStmt          *sql.Stmt
+	statsStmt               *sql.Stmt
 }
 
 func (backend *SqlBackend) init(prepare []string) error {
@@ -135,6 +137,10 @@ func (backend *SqlBackend) init(prepare []string) error {
 		FROM Users u
 		JOIN UserGroups ug ON (ug.uid = u.uid)
 		WHERE ug.gid = $1`)
+	if err != nil {
+		return err
+	}
+	backend.statsStmt, err = backend.db.Prepare(`SELECT COUNT(Uid) AS UserCount FROM Users`)
 	if err != nil {
 		return err
 	}
@@ -462,6 +468,29 @@ func (backend *SqlBackend) GroupUsers(groupgid string) ([]User, *Error) {
 		users = append(users, User{uid, name, state == STATUS_ACTIVE})
 	}
 	return users, nil
+}
+
+func (backend *SqlBackend) Stats() (stats map[string]string, err *Error) {
+	stats = make(map[string]string)
+	rows, rerr := backend.statsStmt.Query()
+	defer rows.Close()
+	if rerr != nil {
+		err = &Error{"EFAULT", rerr.Error()}
+		return
+	}
+	if !rows.Next() {
+		err = &Error{"ENOENT", "Name unknown"}
+		return
+	}
+
+	var userCount int
+	serr := rows.Scan(&userCount)
+	stats["Users"] = strconv.Itoa(userCount)
+
+	if serr != nil {
+		err = &Error{"EFAULT", serr.Error()}
+	}
+	return
 }
 
 func (backend *SqlBackend) Close() {

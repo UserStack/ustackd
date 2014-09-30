@@ -414,6 +414,7 @@ func TestStats(t *testing.T) {
 		"Unrestricted Commands":                "0",
 		"Restricted Commands":                  "4",
 		"Access denied on Restricted Commands": "0",
+		"Users": "8",
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %s to be %s", stats, expected)
@@ -431,6 +432,7 @@ func TestStats(t *testing.T) {
 		"Unrestricted Commands":                "1",
 		"Restricted Commands":                  "5",
 		"Access denied on Restricted Commands": "0",
+		"Users": "8",
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %s to be %s", stats, expected)

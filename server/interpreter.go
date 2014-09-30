@@ -127,6 +127,14 @@ func (ip *Interpreter) stats(line string) {
 	ip.Writef("Unrestricted Commands: %d", ip.Server.Stats.unrestrictedCommands)
 	ip.Writef("Restricted Commands: %d", ip.Server.Stats.restrictedCommands)
 	ip.Writef("Access denied on Restricted Commands: %d", ip.Server.Stats.restrictedCommandsAccessDenied)
+
+	stats, err := ip.Backend.Stats()
+	if err != nil {
+		ip.Write(err.Code)
+	}
+	for key, value := range stats {
+		ip.Writef("%s: %s", key, value)
+	}
 	ip.Ok()
 }
 

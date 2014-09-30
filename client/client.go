@@ -163,6 +163,24 @@ func (client *Client) GroupUsers(groupgid string) (list []backends.User, err *ba
 	return
 }
 
+func (client *Client) Stats() (stats map[string]string, err *backends.Error) {
+	stats = make(map[string]string)
+	list, err := client.listCmd("stats")
+	if err != nil {
+		return
+	}
+
+	for _, line := range list {
+		args := strings.Split(line, ": ")
+		if len(args) != 2 {
+			err = &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
+			return
+		}
+		stats[strings.TrimSpace(args[0])] = args[1]
+	}
+	return
+}
+
 func (client *Client) Close() {
 	client.Text.Cmd("quit")
 	client.Text.Close()
@@ -288,22 +306,4 @@ func (client *Client) listCmd(format string, args ...interface{}) ([]string, *ba
 		}
 		list = append(list, line)
 	}
-}
-
-func (client *Client) Stats() (stats map[string]string, err *backends.Error) {
-	stats = make(map[string]string)
-	list, err := client.listCmd("stats")
-	if err != nil {
-		return
-	}
-
-	for _, line := range list {
-		args := strings.Split(line, ": ")
-		if len(args) != 2 {
-			err = &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
-			return
-		}
-		stats[strings.TrimSpace(args[0])] = args[1]
-	}
-	return
 }
