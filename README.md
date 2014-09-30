@@ -431,3 +431,21 @@ Return Codes:
 
     OK: Ok
     ENOENT: Group doesn't exist
+
+## Run database tests locally
+
+### MySQL
+
+    brew install mysql
+    mysql.server start
+
+### PostgreSQL
+
+    brew install postgres
+    cd tmp/
+    initdb pgdata
+    postgres -D pgdata
+    
+In a seperate terminal:
+
+    createdb ustackd

@@ -124,6 +124,10 @@ func (s *Server) setupBackend() (err error) {
 	switch s.Cfg.Daemon.Backend {
 	case "sqlite":
 		err = s.setupSqlite()
+	case "mysql":
+		err = s.setupMysql()
+	case "postgres":
+		err = s.setupPostgres()
 	case "proxy":
 		err = s.setupProxy()
 	case "nil":
@@ -140,6 +144,24 @@ func (s *Server) setupSqlite() (err error) {
 		err = fmt.Errorf("Unable to open sqlite at %s: %s\n", s.Cfg.Sqlite.Url, err)
 	}
 	s.Backend = &sqlite
+	return
+}
+
+func (s *Server) setupMysql() (err error) {
+	mysql, err := backends.NewMysqlBackend(s.Cfg.Mysql.Url)
+	if err != nil {
+		err = fmt.Errorf("Unable to open mysql at %s: %s\n", s.Cfg.Mysql.Url, err)
+	}
+	s.Backend = &mysql
+	return
+}
+
+func (s *Server) setupPostgres() (err error) {
+	postgres, err := backends.NewPostgresBackend(s.Cfg.Postgres.Url)
+	if err != nil {
+		err = fmt.Errorf("Unable to open postgres at %s: %s\n", s.Cfg.Postgres.Url, err)
+	}
+	s.Backend = &postgres
 	return
 }
 

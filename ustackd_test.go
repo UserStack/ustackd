@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -17,9 +18,13 @@ var started bool
 func clientServer() (*client.Client, func()) {
 	if started == false {
 		serverInstance = server.NewServer()
+		var configPath string
+		if configPath = os.Getenv("TEST_CONFIG"); configPath == "" {
+			configPath = "config/test.conf"
+		}
 		go (func() {
 			serverInstance.Run([]string{
-				"./ustackd", "-f", "-c", "config/test.conf",
+				"./ustackd", "-f", "-c", configPath,
 			})
 		})()
 		started = true

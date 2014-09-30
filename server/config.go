@@ -14,6 +14,8 @@ type ConfigIntern struct {
 	Security
 	Ssl
 	Sqlite
+	Mysql
+	Postgres
 	Proxy
 }
 
@@ -24,6 +26,8 @@ type Config struct {
 	Security
 	Ssl
 	Sqlite
+	Mysql
+	Postgres
 	Proxy
 }
 
@@ -67,6 +71,14 @@ type Sqlite struct {
 	Url string
 }
 
+type Mysql struct {
+	Url string
+}
+
+type Postgres struct {
+	Url string
+}
+
 type Proxy struct {
 	Host         string
 	Ssl          bool
@@ -93,6 +105,8 @@ func Read(filename string) (config Config, err error) {
 	config.Ssl = cfgIntern.Ssl
 	config.Sqlite = cfgIntern.Sqlite
 	config.Proxy = cfgIntern.Proxy
+	config.Mysql = cfgIntern.Mysql
+	config.Postgres = cfgIntern.Postgres
 
 	config.Client, err = splitAuth(cfgIntern.Client)
 	return

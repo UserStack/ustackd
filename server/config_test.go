@@ -23,6 +23,8 @@ func TestRead(t *testing.T) {
 
 		Ssl{true, "config/key.pem", "config/cert.pem"},
 		Sqlite{"./ustackd.db"},
+		Mysql{""},
+		Postgres{""},
 		Proxy{"", false, "", ""},
 	}
 
@@ -49,6 +51,8 @@ func TestDefault(t *testing.T) {
 
 		Ssl{false, nilString, nilString},
 		Sqlite{nilString},
+		Mysql{""},
+		Postgres{""},
 		Proxy{nilString, false, nilString, nilString},
 	}
 
@@ -83,6 +87,8 @@ func TestReadAll(t *testing.T) {
 			"/etc/ustack/cert.pem",
 		},
 		Sqlite{"ustackd.db"},
+		Mysql{"travis/ustackd?encoding=utf8"},
+		Postgres{"user=postgres dbname=ustackd"},
 		Proxy{"127.0.0.1:7654", true, "config/cert.pem", "SOMEVERYGOODSECRET"},
 	}
 
