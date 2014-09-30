@@ -2,8 +2,11 @@ package client
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
+
+	"github.com/UserStack/ustackd/backends"
 )
 
 func uniqName() string {
@@ -174,10 +177,6 @@ func TestChangeUserName(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) UserGroups(nameuid string) ([]Group, *Error) {
-//     return nil, nil
-// }
-
 func TestDeleteUser(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
@@ -244,14 +243,6 @@ func TestGroup(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
-//     return nil
-// }
-//
-// func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
-//     return nil
-// }
-
 func TestDeleteGroup(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
@@ -264,9 +255,10 @@ func TestDeleteGroup(t *testing.T) {
 		t.Fatal("should error on missing parameter", err.Code)
 	}
 
-	// create two users
+	// create two groups
 	client.CreateGroup(group0)
 	gid, _ := client.CreateGroup(group1)
+	defer client.DeleteGroup(group1)
 
 	// now has two users
 	groups, _ := client.Groups()
@@ -285,7 +277,7 @@ func TestDeleteGroup(t *testing.T) {
 	}
 	groups, _ = client.Groups()
 	if len(groups) != 0 {
-		t.Fatal("user count should have been 0 but was", len(groups))
+		t.Fatal("group count should have been 0 but was", len(groups))
 	}
 }
 
@@ -310,6 +302,66 @@ func TestGroups(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) GroupUsers(groupgid string) ([]User, *Error) {
-//     return nil, nil
-// }
+func TestUsersAndGroupsAssociations(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+
+	joe := uniqName()
+	mike := uniqName()
+	developers := uniqName()
+	admins := uniqName()
+	gid0, _ := client.CreateGroup(developers)
+	defer client.DeleteGroup(developers)
+	gid1, _ := client.CreateGroup(admins)
+	defer client.DeleteGroup(admins)
+	uid0, _ := client.CreateUser(joe, "secret")
+	defer client.DeleteUser(joe)
+	uid1, _ := client.CreateUser(mike, "secret")
+	defer client.DeleteUser(mike)
+
+	gid0s := fmt.Sprintf("%d", gid0)
+	uid0s := fmt.Sprintf("%d", uid0)
+
+	// User Groups
+	groups, _ := client.UserGroups(joe)
+	if len(groups) != 0 {
+		t.Fatal("expected joe not to have any groups")
+	}
+	client.AddUserToGroup(joe, gid0s)
+	client.AddUserToGroup(uid0s, admins)
+	expectedGroups := []backends.Group{
+		backends.Group{Gid: gid0, Name: developers},
+		backends.Group{Gid: gid1, Name: admins},
+	}
+	groups, _ = client.UserGroups(joe)
+	if !reflect.DeepEqual(expectedGroups, groups) {
+		t.Fatalf("expected joe have groups %v but has %v", expectedGroups, groups)
+	}
+
+	// Group Users
+	users, _ := client.GroupUsers(admins)
+	if len(users) < 1 {
+		t.Fatal("expected to have one admin, got %v", users)
+	}
+	client.AddUserToGroup(mike, admins)
+	users, _ = client.GroupUsers(admins)
+	expectedUsers := []backends.User{
+		backends.User{Uid: uid0, Name: joe},
+		backends.User{Uid: uid1, Name: mike},
+	}
+	if reflect.DeepEqual(expectedUsers, users) {
+		t.Fatalf("expected admins have users %v but has %v", expectedUsers, users)
+	}
+
+	// Remove associations
+	client.RemoveUserFromGroup(mike, admins)
+	client.RemoveUserFromGroup(joe, admins)
+	adminsG, _ := client.GroupUsers(admins)
+	if len(adminsG) != 0 {
+		t.Fatal("expected to have no admin, got %v", adminsG)
+	}
+	users, _ = client.GroupUsers(admins)
+	if len(users) != 0 {
+		t.Fatal("expected to have no admin, got %v", users)
+	}
+}

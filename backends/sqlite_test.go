@@ -242,10 +242,6 @@ func TestChangeUserName(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) UserGroups(nameuid string) ([]Group, *Error) {
-//     return nil, nil
-// }
-
 func TestDeleteUser(t *testing.T) {
 	backend, dberr := NewSqliteBackend(":memory:")
 	if dberr != nil {
@@ -343,14 +339,6 @@ func TestGroup(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
-//     return nil
-// }
-//
-// func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
-//     return nil
-// }
-
 func TestDeleteGroup(t *testing.T) {
 	backend, dberr := NewSqliteBackend(":memory:")
 	if dberr != nil {
@@ -411,6 +399,59 @@ func TestGroups(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) GroupUsers(groupgid string) ([]User, *Error) {
-//     return nil, nil
-// }
+func TestUsersAndGroupsAssociations(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	backend.CreateGroup("developers")
+	backend.CreateGroup("admins")
+
+	backend.CreateUser("joe", "secret")
+	backend.CreateUser("mike", "secret")
+
+	// User Groups
+	groups, _ := backend.UserGroups("joe")
+	if len(groups) != 0 {
+		t.Fatal("expected joe not to have any groups")
+	}
+	backend.AddUserToGroup("joe", "1")
+	backend.AddUserToGroup("1", "admins")
+	expectedGroups := []Group{
+		Group{Gid: 1, Name: "developers"},
+		Group{Gid: 2, Name: "admins"},
+	}
+	groups, _ = backend.UserGroups("joe")
+	if !reflect.DeepEqual(expectedGroups, groups) {
+		t.Fatalf("expected joe have groups %v but has %v", groups)
+	}
+
+	// Group Users
+	users, _ := backend.GroupUsers("admins")
+	if len(users) != 1 {
+		t.Fatal("expected to have one admin, got %v", users)
+	}
+	backend.AddUserToGroup("mike", "admins")
+	users, _ = backend.GroupUsers("admins")
+	expectedUsers := []User{
+		User{Uid: 1, Name: "joe"},
+		User{Uid: 2, Name: "mike"},
+	}
+	if reflect.DeepEqual(expectedUsers, users) {
+		t.Fatalf("expected admins have users %v but has %v", expectedUsers, users)
+	}
+
+	// Remove associations
+	backend.RemoveUserFromGroup("mike", "admins")
+	backend.RemoveUserFromGroup("joe", "admins")
+	admins, _ := backend.GroupUsers("admins")
+	if len(admins) != 0 {
+		t.Fatal("expected to have no admin, got %v", admins)
+	}
+	users, _ = backend.GroupUsers("admins")
+	if len(users) != 0 {
+		t.Fatal("expected to have no admin, got %v", users)
+	}
+}

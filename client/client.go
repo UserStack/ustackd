@@ -122,37 +122,18 @@ func (client *Client) ChangeUserName(nameuid string, password string, newname st
 	return client.simpleCmd("change name %s %s %s", nameuid, password, newname)
 }
 
-func (client *Client) UserGroups(nameuid string) ([]backends.Group, *backends.Error) {
-	return nil, nil
+func (client *Client) UserGroups(nameuid string) (list []backends.Group, err *backends.Error) {
+	list, err = client.listGroupCmd("user groups %s", nameuid)
+	return
 }
 
 func (client *Client) DeleteUser(nameuid string) *backends.Error {
 	return client.simpleCmd("delete user %s", nameuid)
 }
 
-func (client *Client) Users() ([]backends.User, *backends.Error) {
-	list, err := client.listCmd("users")
-	if err != nil {
-		return nil, err
-	}
-
-	var users []backends.User
-	for _, line := range list {
-		args := strings.Split(line, ":")
-		if len(args) != 3 {
-			return nil, &backends.Error{Code: "EFAULT", Message: "Expected three values: " + line}
-		}
-		uid, perr := strconv.ParseInt(args[1], 10, 64)
-		if perr != nil {
-			return nil, &backends.Error{Code: "EFAULT", Message: perr.Error()}
-		}
-		users = append(users, backends.User{
-			Uid:    uid,
-			Name:   args[0],
-			Active: (args[2] == "Y"),
-		})
-	}
-	return users, nil
+func (client *Client) Users() (list []backends.User, err *backends.Error) {
+	list, err = client.listUserCmd("users")
+	return
 }
 
 func (client *Client) CreateGroup(name string) (gid int64, err *backends.Error) {
@@ -161,43 +142,25 @@ func (client *Client) CreateGroup(name string) (gid int64, err *backends.Error) 
 }
 
 func (client *Client) AddUserToGroup(nameuid string, groupgid string) *backends.Error {
-	return nil
+	return client.simpleCmd("add %s %s", nameuid, groupgid)
 }
 
 func (client *Client) RemoveUserFromGroup(nameuid string, groupgid string) *backends.Error {
-	return nil
+	return client.simpleCmd("remove %s %s", nameuid, groupgid)
 }
 
 func (client *Client) DeleteGroup(groupgid string) *backends.Error {
 	return client.simpleCmd("delete group %s", groupgid)
 }
 
-func (client *Client) Groups() ([]backends.Group, *backends.Error) {
-	list, err := client.listCmd("groups")
-	if err != nil {
-		return nil, err
-	}
-
-	var groups []backends.Group
-	for _, line := range list {
-		args := strings.Split(line, ":")
-		if len(args) != 2 {
-			return nil, &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
-		}
-		gid, perr := strconv.ParseInt(args[1], 10, 64)
-		if perr != nil {
-			return nil, &backends.Error{Code: "EFAULT", Message: perr.Error()}
-		}
-		groups = append(groups, backends.Group{
-			Gid:  gid,
-			Name: args[0],
-		})
-	}
-	return groups, nil
+func (client *Client) Groups() (list []backends.Group, err *backends.Error) {
+	list, err = client.listGroupCmd("groups")
+	return
 }
 
-func (client *Client) GroupUsers(groupgid string) ([]backends.User, *backends.Error) {
-	return nil, nil
+func (client *Client) GroupUsers(groupgid string) (list []backends.User, err *backends.Error) {
+	list, err = client.listUserCmd("group users %s", groupgid)
+	return
 }
 
 func (client *Client) Close() {
@@ -253,6 +216,55 @@ func (client *Client) simpleIntCmd(format string, args ...interface{}) (int64, *
 		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleIntResponse()
+}
+
+func (client *Client) listUserCmd(format string, args ...interface{}) ([]backends.User, *backends.Error) {
+	list, err := client.listCmd(format, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []backends.User
+	for _, line := range list {
+		args := strings.Split(line, ":")
+		if len(args) != 3 {
+			return nil, &backends.Error{Code: "EFAULT", Message: "Expected three values: " + line}
+		}
+		uid, perr := strconv.ParseInt(args[1], 10, 64)
+		if perr != nil {
+			return nil, &backends.Error{Code: "EFAULT", Message: perr.Error()}
+		}
+		users = append(users, backends.User{
+			Uid:    uid,
+			Name:   args[0],
+			Active: (args[2] == "Y"),
+		})
+	}
+	return users, nil
+}
+
+func (client *Client) listGroupCmd(format string, args ...interface{}) ([]backends.Group, *backends.Error) {
+	list, err := client.listCmd(format, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	var groups []backends.Group
+	for _, line := range list {
+		args := strings.Split(line, ":")
+		if len(args) != 2 {
+			return nil, &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
+		}
+		gid, perr := strconv.ParseInt(args[1], 10, 64)
+		if perr != nil {
+			return nil, &backends.Error{Code: "EFAULT", Message: perr.Error()}
+		}
+		groups = append(groups, backends.Group{
+			Gid:  gid,
+			Name: args[0],
+		})
+	}
+	return groups, nil
 }
 
 func (client *Client) listCmd(format string, args ...interface{}) ([]string, *backends.Error) {
