@@ -163,8 +163,8 @@ func (client *Client) GroupUsers(groupgid string) (list []backends.User, err *ba
 	return
 }
 
-func (client *Client) Stats() (stats map[string]string, err *backends.Error) {
-	stats = make(map[string]string)
+func (client *Client) Stats() (stats map[string]int, err *backends.Error) {
+	stats = make(map[string]int)
 	list, err := client.listCmd("stats")
 	if err != nil {
 		return
@@ -176,7 +176,12 @@ func (client *Client) Stats() (stats map[string]string, err *backends.Error) {
 			err = &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
 			return
 		}
-		stats[strings.TrimSpace(args[0])] = args[1]
+		value, verr := strconv.Atoi(args[1])
+		if verr != nil {
+			err = &backends.Error{Code: "EFAULT", Message: "Expected number: " + args[1]}
+			return
+		}
+		stats[strings.TrimSpace(args[0])] = value
 	}
 	return
 }

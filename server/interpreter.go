@@ -130,10 +130,11 @@ func (ip *Interpreter) stats(line string) {
 
 	stats, err := ip.Backend.Stats()
 	if err != nil {
-		ip.Write(err.Code)
+		ip.Err(err.Code)
+		return
 	}
 	for key, value := range stats {
-		ip.Writef("%s: %s", key, value)
+		ip.Writef("%s: %d", key, value)
 	}
 	ip.Ok()
 }

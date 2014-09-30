@@ -52,6 +52,6 @@ type Abstract interface {
 	DeleteGroup(groupgid string) *Error
 	Groups() ([]Group, *Error)
 	GroupUsers(groupgid string) ([]User, *Error)
-	Stats() (stats map[string]string, err *Error)
+	Stats() (stats map[string]int, err *Error)
 	Close()
 }

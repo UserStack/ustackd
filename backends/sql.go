@@ -3,7 +3,6 @@ package backends
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 )
 
 const (
@@ -470,8 +469,8 @@ func (backend *SqlBackend) GroupUsers(groupgid string) ([]User, *Error) {
 	return users, nil
 }
 
-func (backend *SqlBackend) Stats() (stats map[string]string, err *Error) {
-	stats = make(map[string]string)
+func (backend *SqlBackend) Stats() (stats map[string]int, err *Error) {
+	stats = make(map[string]int)
 	rows, rerr := backend.statsStmt.Query()
 	defer rows.Close()
 	if rerr != nil {
@@ -485,7 +484,7 @@ func (backend *SqlBackend) Stats() (stats map[string]string, err *Error) {
 
 	var userCount int
 	serr := rows.Scan(&userCount)
-	stats["Users"] = strconv.Itoa(userCount)
+	stats["Users"] = userCount
 
 	if serr != nil {
 		err = &Error{"EFAULT", serr.Error()}

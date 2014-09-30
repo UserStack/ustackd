@@ -71,7 +71,7 @@ func (backend *NilBackend) GroupUsers(groupgid string) ([]User, *Error) {
 	return nil, nil
 }
 
-func (backend *NilBackend) Stats() (map[string]string, *Error) {
+func (backend *NilBackend) Stats() (map[string]int, *Error) {
 	return nil, nil
 }
 

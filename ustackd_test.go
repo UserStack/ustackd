@@ -405,36 +405,36 @@ func TestStats(t *testing.T) {
 	tempClient, _ := clientServer()      // Connects++
 
 	stats, _ := client.Stats()
-	expected := map[string]string{
-		"Connects":                             "1",
-		"Disconnects":                          "0",
-		"Active Connections":                   "1",
-		"Successfull logins":                   "1",
-		"Failed logins":                        "2",
-		"Unrestricted Commands":                "0",
-		"Restricted Commands":                  "4",
-		"Access denied on Restricted Commands": "0",
-		"Users": "8",
+	expected := map[string]int{
+		"Connects":                             1,
+		"Disconnects":                          0,
+		"Active Connections":                   1,
+		"Successfull logins":                   1,
+		"Failed logins":                        2,
+		"Unrestricted Commands":                0,
+		"Restricted Commands":                  4,
+		"Access denied on Restricted Commands": 0,
+		"Users": 8,
 	}
 	if !reflect.DeepEqual(stats, expected) {
-		t.Fatalf("expected %s to be %s", stats, expected)
+		t.Fatalf("expected %v to be %v", stats, expected)
 	}
 
 	tempClient.Close() // Disconnects++
 
 	stats, _ = client.Stats()
-	expected = map[string]string{
-		"Connects":                             "1",
-		"Disconnects":                          "1",
-		"Active Connections":                   "0",
-		"Successfull logins":                   "1",
-		"Failed logins":                        "2",
-		"Unrestricted Commands":                "1",
-		"Restricted Commands":                  "5",
-		"Access denied on Restricted Commands": "0",
-		"Users": "8",
+	expected = map[string]int{
+		"Connects":                             1,
+		"Disconnects":                          1,
+		"Active Connections":                   0,
+		"Successfull logins":                   1,
+		"Failed logins":                        2,
+		"Unrestricted Commands":                1,
+		"Restricted Commands":                  5,
+		"Access denied on Restricted Commands": 0,
+		"Users": 8,
 	}
 	if !reflect.DeepEqual(stats, expected) {
-		t.Fatalf("expected %s to be %s", stats, expected)
+		t.Fatalf("expected %v to be %v", stats, expected)
 	}
 }
