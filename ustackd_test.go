@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	"fmt"
@@ -7,27 +7,47 @@ import (
 	"time"
 
 	"github.com/UserStack/ustackd/backends"
+	"github.com/UserStack/ustackd/client"
+	"github.com/UserStack/ustackd/server"
 )
+
+var serverInstance *server.Server
+var started bool
+
+func clientServer() (*client.Client, func()) {
+	if started == false {
+		serverInstance = server.NewServer()
+		go (func() {
+			serverInstance.Run([]string{
+				"./ustackd", "-f", "-c", "config/test.conf",
+			})
+		})()
+		started = true
+		time.Sleep(1 * time.Second)
+	}
+	client, err := client.Dial("localhost:35786")
+	if err != nil {
+		panic("client was unable to connect to server: " + err.Error())
+	}
+	close := func() {
+		client.Close()
+	}
+	return client, close
+}
 
 func uniqName() string {
 	return fmt.Sprintf("test-%d", time.Now().UnixNano())
 }
 
 func TestConnect(t *testing.T) {
-	client, err := Dial("localhost:35786")
-	defer client.Close()
-	if err != nil {
-		t.Fatal("client was unable to connect to server", err)
-	}
+	_, close := clientServer()
+	defer close()
 }
 
 func TestConnectTls(t *testing.T) {
-	client, err := Dial("localhost:35786")
-	defer client.Close()
-	if err != nil {
-		t.Fatal("client was unable to connect to server", err)
-	}
-	aerr := client.StartTlsWithCert("../config/cert.pem")
+	client, close := clientServer()
+	defer close()
+	aerr := client.StartTlsWithCert("config/cert.pem")
 	if aerr != nil {
 		t.Fatal("unable to establish tls", aerr)
 	}
@@ -40,8 +60,8 @@ func TestConnectTls(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	id, err := client.CreateUser(username, "secret")
@@ -51,8 +71,8 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestDisableUser(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -63,8 +83,8 @@ func TestDisableUser(t *testing.T) {
 }
 
 func TestEnableUser(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -75,8 +95,8 @@ func TestEnableUser(t *testing.T) {
 }
 
 func TestSetGetUserData(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -88,8 +108,8 @@ func TestSetGetUserData(t *testing.T) {
 }
 
 func TestLoginUser(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -110,8 +130,8 @@ func TestLoginUser(t *testing.T) {
 }
 
 func TestChangeUserPassword(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 
 	ierr1 := client.ChangeUserPassword("", "secret2", "secret2")
@@ -144,8 +164,8 @@ func TestChangeUserPassword(t *testing.T) {
 }
 
 func TestChangeUserName(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	newusername := uniqName()
 
@@ -178,8 +198,8 @@ func TestChangeUserName(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username := uniqName()
 	client.CreateUser(username, "secret")
 	_, lerr := client.LoginUser(username, "secret")
@@ -197,8 +217,8 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestUsers(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	username0 := uniqName()
 	uid0, _ := client.CreateUser(username0, "secret")
 	username1 := uniqName()
@@ -222,8 +242,8 @@ func TestUsers(t *testing.T) {
 }
 
 func TestGroup(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 	group := uniqName()
 
 	_, err := client.CreateGroup("")
@@ -244,8 +264,8 @@ func TestGroup(t *testing.T) {
 }
 
 func TestDeleteGroup(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 
 	group0 := uniqName()
 	group1 := uniqName()
@@ -282,8 +302,8 @@ func TestDeleteGroup(t *testing.T) {
 }
 
 func TestGroups(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 
 	group0 := uniqName()
 	group1 := uniqName()
@@ -303,8 +323,8 @@ func TestGroups(t *testing.T) {
 }
 
 func TestUsersAndGroupsAssociations(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
+	client, close := clientServer()
+	defer close()
 
 	joe := uniqName()
 	mike := uniqName()
@@ -341,7 +361,7 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 	// Group Users
 	users, _ := client.GroupUsers(admins)
 	if len(users) < 1 {
-		t.Fatal("expected to have one admin, got %v", users)
+		t.Fatalf("expected to have one admin, got %v", users)
 	}
 	client.AddUserToGroup(mike, admins)
 	users, _ = client.GroupUsers(admins)
@@ -358,10 +378,10 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 	client.RemoveUserFromGroup(joe, admins)
 	adminsG, _ := client.GroupUsers(admins)
 	if len(adminsG) != 0 {
-		t.Fatal("expected to have no admin, got %v", adminsG)
+		t.Fatalf("expected to have no admin, got %v", adminsG)
 	}
 	users, _ = client.GroupUsers(admins)
 	if len(users) != 0 {
-		t.Fatal("expected to have no admin, got %v", users)
+		t.Fatalf("expected to have no admin, got %v", users)
 	}
 }

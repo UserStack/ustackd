@@ -13,14 +13,8 @@ vet:
 	go get -u code.google.com/p/go.tools/cmd/vet
 	go vet ./...
 
-test: clean build vet
-	# requires started server
-	${TEST_SERVER} &
-	sleep 1
-	go test ./...
-	ok=$$?
-	sh -c "kill -INT `cat ${PID_FILE}`"
-	exit ${ok}
+test: clean vet
+	go test -v ./...
 
 fmt:
 	go fmt ./...
@@ -32,6 +26,3 @@ cert:
 clean:
 	go clean
 	rm -f ustackd.db ustackd.pid ${PID_FILE}
-
-tserver: clean build
-	${TEST_SERVER}

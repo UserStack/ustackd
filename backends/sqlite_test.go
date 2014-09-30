@@ -425,13 +425,13 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 	}
 	groups, _ = backend.UserGroups("joe")
 	if !reflect.DeepEqual(expectedGroups, groups) {
-		t.Fatalf("expected joe have groups %v but has %v", groups)
+		t.Fatalf("expected joe have groups %v but has %v", expectedGroups, groups)
 	}
 
 	// Group Users
 	users, _ := backend.GroupUsers("admins")
 	if len(users) != 1 {
-		t.Fatal("expected to have one admin, got %v", users)
+		t.Fatalf("expected to have one admin, got %v", users)
 	}
 	backend.AddUserToGroup("mike", "admins")
 	users, _ = backend.GroupUsers("admins")
@@ -448,10 +448,10 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 	backend.RemoveUserFromGroup("joe", "admins")
 	admins, _ := backend.GroupUsers("admins")
 	if len(admins) != 0 {
-		t.Fatal("expected to have no admin, got %v", admins)
+		t.Fatalf("expected to have no admin, got %v", admins)
 	}
 	users, _ = backend.GroupUsers("admins")
 	if len(users) != 0 {
-		t.Fatal("expected to have no admin, got %v", users)
+		t.Fatalf("expected to have no admin, got %v", users)
 	}
 }

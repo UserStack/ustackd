@@ -13,13 +13,15 @@ type Context struct {
 	reader *bufio.Reader
 	writer *bufio.Writer
 	*Server
+	addr     net.Addr
 	quitting bool
 }
 
 func NewContext(conn net.Conn, server *Server) *Context {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	return &Context{conn, reader, writer, server, false}
+	addr := conn.RemoteAddr()
+	return &Context{conn, reader, writer, server, addr, false}
 }
 
 func (context *Context) Write(line string) {
@@ -48,7 +50,7 @@ func (context *Context) Err(code string) {
 }
 
 func (context *Context) Log(line string) {
-	context.Logger.Printf("%s: %s\r\n", context.conn.RemoteAddr(), line)
+	context.Logger.Printf("%s: %s\r\n", context.addr, line)
 }
 
 func (context *Context) Realm() {

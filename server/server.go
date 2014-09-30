@@ -45,7 +45,7 @@ func (s *Server) Run(args []string) {
 	s.App.Action = func(c *cli.Context) {
 		s.RunContext(c)
 	}
-	s.App.Run(os.Args)
+	s.App.Run(args)
 }
 
 func (s *Server) RunContext(c *cli.Context) {
