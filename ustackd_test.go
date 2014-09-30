@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"testing"
 	"time"
 
@@ -398,14 +397,30 @@ func TestStats(t *testing.T) {
 	client.LoginUser(username, "secret") // Successfull login
 	client.LoginUser("foobar", "123456") // Failed login
 	client.LoginUser("foobar", "123456") // twice
+	tempClient, _ := clientServer()      // Connects++
 
 	stats, _ := client.Stats()
-
 	expected := map[string]string{
+		"Connects":           "1",
+		"Disconnects":        "0",
+		"Active Connections": "1",
 		"Successfull logins": "1",
 		"Failed logins":      "2",
 	}
+	if !reflect.DeepEqual(stats, expected) {
+		t.Fatalf("expected %s to be %s", stats, expected)
+	}
 
+	tempClient.Close() // Disconnects++
+
+	stats, _ = client.Stats()
+	expected = map[string]string{
+		"Connects":           "1",
+		"Disconnects":        "1",
+		"Active Connections": "0",
+		"Successfull logins": "1",
+		"Failed logins":      "2",
+	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %s to be %s", stats, expected)
 	}

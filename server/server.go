@@ -22,14 +22,6 @@ type Server struct {
 	listeners []net.Listener
 	Stats
 }
-type Stats struct {
-	Login, FailedLogin int
-}
-
-func (s *Stats) Reset() {
-	s.Login = 0
-	s.FailedLogin = 0
-}
 
 func NewServer() *Server {
 	app := cli.NewApp()

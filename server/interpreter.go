@@ -116,6 +116,9 @@ func (ip *Interpreter) clientAuth(passwd string) {
 }
 
 func (ip *Interpreter) stats(line string) {
+	ip.Writef("Connects: %d", ip.Server.Stats.Connects)
+	ip.Writef("Disconnects: %d", ip.Server.Stats.Disconnects)
+	ip.Writef("Active Connections: %d", ip.Server.Stats.ActiveConnections())
 	ip.Writef("Successfull logins: %d", ip.Server.Stats.Login)
 	ip.Writef("Failed logins: %d", ip.Server.Stats.FailedLogin)
 	ip.Ok()

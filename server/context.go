@@ -58,11 +58,13 @@ func (context *Context) Realm() {
 		context.App.Version, 1)
 	context.Write(realm)
 	context.Log("Client connected")
+	context.Server.Stats.Connects++
 }
 
 func (context *Context) Close() {
 	context.conn.Close()
 	context.Log("Client disconnected")
+	context.Server.Stats.Disconnects++
 }
 
 func (context *Context) Handle() {
