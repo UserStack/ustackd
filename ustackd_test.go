@@ -83,7 +83,7 @@ func TestDisableUser(t *testing.T) {
 	client.CreateUser(username, "secret")
 	err := client.DisableUser(username)
 	if err != nil {
-		t.Fatal("unable to diable user", err)
+		t.Fatal("unable to disable user", err)
 	}
 }
 
@@ -95,7 +95,7 @@ func TestEnableUser(t *testing.T) {
 	client.CreateUser(username, "secret")
 	err := client.EnableUser(username)
 	if err != nil {
-		t.Fatal("unable to diable user", err)
+		t.Fatal("unable to enable user", err)
 	}
 }
 

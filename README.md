@@ -125,8 +125,6 @@ should be able to communicate with all possible backends.
 
 ### sqlite
 
-Capability: Customer, User
-
 Sqlite 3 implementation of the backend.
 
     [Daemon]
@@ -139,10 +137,21 @@ Or to use a memory database for testing
     
     [sqlite]
     url = :memory:
+    
+See [here](http://www.sqlite.org/c3ref/open.html) more info on how paths can look like.
+
+### postgres
+
+PostgreSQL implementation of the backend. See [http://godoc.org/github.com/lib/pq](http://godoc.org/github.com/lib/pq)
+for example connection strings.
+
+    [Daemon]
+    backend = postgres
+    
+    [postgres]
+    url = "user=postgres dbname=ustackd sslmode=disable"
 
 ### proxy
-
-Capability: Customer, User
 
 Proxy backend implementation connects to a different ustackd and proxies requests.
 
@@ -164,13 +173,11 @@ Proxy backend implementation connects to a different ustackd and proxies request
 
 ### nil
 
-Capability: Customer, User
-
 Nil backend implementation is a dummy implementation, that always returns ok.
 
     [Daemon]
     backend = nil
-
+    
 ## Protocol
 
 This section describes the protocol that is used to interface with the daemon.
@@ -434,11 +441,6 @@ Return Codes:
 
 ## Run database tests locally
 
-### MySQL
-
-    brew install mysql
-    mysql.server start
-
 ### PostgreSQL
 
     brew install postgres
@@ -449,3 +451,5 @@ Return Codes:
 In a seperate terminal:
 
     createdb ustackd
+    psql -U $USER -c "CREATE USER postgres;" ustackd
+    psql -U $USER -c "GRANT ALL PRIVILEGES ON DATABASE ustackd TO postgres;" ustackd

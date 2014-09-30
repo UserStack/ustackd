@@ -18,12 +18,16 @@ test: clean vet sqlite
 
 sqlite:
 	go test -v ./...
-
+	
+ci: test postgresql
+	
+# tailored to travis ci
 postgresql:
 	psql -c 'create database ustackd;' -U postgres
 	TEST_CONFIG=config/test_psql.conf go test -v ./...
 	psql -c 'drop database ustackd;' -U postgres
-	
+
+# tailored to travis ci
 mysql:
 	mysql -e 'create database ustackd;'
 	TEST_CONFIG=config/test_mysql.conf go test -v ./...
