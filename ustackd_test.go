@@ -401,11 +401,14 @@ func TestStats(t *testing.T) {
 
 	stats, _ := client.Stats()
 	expected := map[string]string{
-		"Connects":           "1",
-		"Disconnects":        "0",
-		"Active Connections": "1",
-		"Successfull logins": "1",
-		"Failed logins":      "2",
+		"Connects":                             "1",
+		"Disconnects":                          "0",
+		"Active Connections":                   "1",
+		"Successfull logins":                   "1",
+		"Failed logins":                        "2",
+		"Unrestricted Commands":                "0",
+		"Restricted Commands":                  "4",
+		"Access denied on Restricted Commands": "0",
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %s to be %s", stats, expected)
@@ -415,11 +418,14 @@ func TestStats(t *testing.T) {
 
 	stats, _ = client.Stats()
 	expected = map[string]string{
-		"Connects":           "1",
-		"Disconnects":        "1",
-		"Active Connections": "0",
-		"Successfull logins": "1",
-		"Failed logins":      "2",
+		"Connects":                             "1",
+		"Disconnects":                          "1",
+		"Active Connections":                   "0",
+		"Successfull logins":                   "1",
+		"Failed logins":                        "2",
+		"Unrestricted Commands":                "1",
+		"Restricted Commands":                  "5",
+		"Access denied on Restricted Commands": "0",
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %s to be %s", stats, expected)

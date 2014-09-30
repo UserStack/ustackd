@@ -14,12 +14,12 @@ type Interpreter struct {
 }
 
 func (ip *Interpreter) parse(line string) {
-	if !(ip.alwaysAvailableCommands(line) || ip.sensitiveCommands(line)) {
+	if !(ip.unrestrictedCommands(line) || ip.restrictedCommands(line)) {
 		ip.Err("EFAULT") // command unknown
 	}
 }
 
-func (ip *Interpreter) alwaysAvailableCommands(line string) bool {
+func (ip *Interpreter) unrestrictedCommands(line string) bool {
 	cmd := strings.ToLower(line)
 	if strings.HasPrefix(cmd, "client auth ") {
 		ip.clientAuth(line[12:])
@@ -28,12 +28,14 @@ func (ip *Interpreter) alwaysAvailableCommands(line string) bool {
 	} else {
 		return false
 	}
+	ip.Server.Stats.unrestrictedCommands++
 	return true
 }
 
-func (ip *Interpreter) sensitiveCommands(line string) bool {
+func (ip *Interpreter) restrictedCommands(line string) bool {
 	if !ip.authorized(line) {
 		ip.Err("EACCES")
+		ip.Server.Stats.restrictedCommandsAccessDenied++
 		return true
 	}
 	cmd := strings.ToLower(line)
@@ -76,6 +78,7 @@ func (ip *Interpreter) sensitiveCommands(line string) bool {
 	} else {
 		return false
 	}
+	ip.Server.Stats.restrictedCommands++
 	return true
 }
 
@@ -121,6 +124,9 @@ func (ip *Interpreter) stats(line string) {
 	ip.Writef("Active Connections: %d", ip.Server.Stats.ActiveConnections())
 	ip.Writef("Successfull logins: %d", ip.Server.Stats.Login)
 	ip.Writef("Failed logins: %d", ip.Server.Stats.FailedLogin)
+	ip.Writef("Unrestricted Commands: %d", ip.Server.Stats.unrestrictedCommands)
+	ip.Writef("Restricted Commands: %d", ip.Server.Stats.restrictedCommands)
+	ip.Writef("Access denied on Restricted Commands: %d", ip.Server.Stats.restrictedCommandsAccessDenied)
 	ip.Ok()
 }
 
