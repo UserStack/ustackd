@@ -20,9 +20,15 @@ type Server struct {
 	App       *cli.App
 	running   bool
 	listeners []net.Listener
-	Stats     struct {
-		Login, FailedLogin int
-	}
+	Stats
+}
+type Stats struct {
+	Login, FailedLogin int
+}
+
+func (s *Stats) Reset() {
+	s.Login = 0
+	s.FailedLogin = 0
 }
 
 func NewServer() *Server {

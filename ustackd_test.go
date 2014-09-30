@@ -390,63 +390,23 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 func TestStats(t *testing.T) {
 	client, close := clientServer()
 	defer close()
-
-	oldStats, _ := client.Stats()
-	if _, ok := oldStats["Successfull logins"]; !ok {
-		t.Fatalf("expected to have key \"Successfull logins\" but it has no such entry")
-	}
+	serverInstance.Stats.Reset()
 
 	username := uniqName()
 	client.CreateUser(username, "secret")
 	defer client.DeleteUser(username)
 	client.LoginUser(username, "secret") // Successfull login
-
-	newStats, _ := client.Stats()
-	newLogins, _ := strconv.Atoi(newStats["Successfull logins"])
-	oldLogins, _ := strconv.Atoi(oldStats["Successfull logins"])
-	diffLogins := newLogins - oldLogins
-	if diffLogins != 1 {
-		if diffLogins >= 0 {
-			t.Fatalf("expected \"Successfull logins\" to be incremented by 1, but is incremented by %d", diffLogins)
-		} else {
-			t.Fatalf("expected \"Successfull logins\" to be incremented by 1, but is decremented by %d", -diffLogins)
-		}
-	}
-
-	newFailedLogins, _ := strconv.Atoi(newStats["Failed logins"])
-	oldFailedLogins, _ := strconv.Atoi(oldStats["Failed logins"])
-	diffFailedLogins := newFailedLogins - oldFailedLogins
-	if diffFailedLogins != 0 {
-		if diffFailedLogins >= 0 {
-			t.Fatalf("expected \"Failed logins\" to be incremented by 0, but is incremented by %d", diffFailedLogins)
-		} else {
-			t.Fatalf("expected \"Failed logins\" to be incremented by 0, but is decremented by %d", -diffFailedLogins)
-		}
-	}
-
 	client.LoginUser("foobar", "123456") // Failed login
-	oldStats = newStats
-	newStats, _ = client.Stats()
+	client.LoginUser("foobar", "123456") // twice
 
-	newLogins, _ = strconv.Atoi(newStats["Successfull logins"])
-	oldLogins, _ = strconv.Atoi(oldStats["Successfull logins"])
-	diffLogins = newLogins - oldLogins
-	if diffLogins != 0 {
-		if diffLogins >= 0 {
-			t.Fatalf("expected \"Successfull logins\" to be incremented by 0, but is incremented by %d", diffLogins)
-		} else {
-			t.Fatalf("expected \"Successfull logins\" to be incremented by 0, but is decremented by %d", -diffLogins)
-		}
+	stats, _ := client.Stats()
+
+	expected := map[string]string{
+		"Successfull logins": "1",
+		"Failed logins":      "2",
 	}
 
-	newFailedLogins, _ = strconv.Atoi(newStats["Failed logins"])
-	oldFailedLogins, _ = strconv.Atoi(oldStats["Failed logins"])
-	diffFailedLogins = newFailedLogins - oldFailedLogins
-	if diffFailedLogins != 1 {
-		if diffFailedLogins >= 0 {
-			t.Fatalf("expected \"Failed logins\" to be incremented by 1, but is incremented by %d", diffFailedLogins)
-		} else {
-			t.Fatalf("expected \"Failed logins\" to be incremented by 1, but is decremented by %d", -diffFailedLogins)
-		}
+	if !reflect.DeepEqual(stats, expected) {
+		t.Fatalf("expected %s to be %s", stats, expected)
 	}
 }
