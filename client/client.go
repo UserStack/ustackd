@@ -102,22 +102,11 @@ func (client *Client) SetUserData(nameuid string, key string, value string) *bac
 }
 
 func (client *Client) GetUserData(nameuid string, key string) (string, *backends.Error) {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("get %s %s", nameuid, key)
+	list, err := client.listCmd("get %s %s", nameuid, key)
 	if err != nil {
-		return "", &backends.Error{Code: "EFAULT", Message: err.Error()}
+		return "", err
 	}
-	line, rerr := client.Text.ReadLine()
-	if rerr != nil {
-		return "", &backends.Error{Code: "EFAULT", Message: rerr.Error()}
-	}
-	if strings.HasPrefix(line, "- E") {
-		ret := strings.Split(line, " ")
-		return "", &backends.Error{Code: ret[1], Message: "remote failure"}
-	}
-	herr := client.handleResponse()
-	return line, herr
+	return list[0], nil
 }
 
 func (client *Client) LoginUser(name string, password string) (uid int64, err *backends.Error) {
@@ -142,24 +131,13 @@ func (client *Client) DeleteUser(nameuid string) *backends.Error {
 }
 
 func (client *Client) Users() ([]backends.User, *backends.Error) {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("users")
+	list, err := client.listCmd("users")
 	if err != nil {
-		return nil, &backends.Error{Code: "EFAULT", Message: err.Error()}
+		return nil, err
 	}
+
 	var users []backends.User
-	for {
-		line, rerr := client.Text.ReadLine()
-		if rerr != nil {
-			return nil, &backends.Error{Code: "EFAULT", Message: rerr.Error()}
-		}
-		if strings.HasPrefix(line, "- E") {
-			ret := strings.Split(line, " ")
-			return nil, &backends.Error{Code: ret[1], Message: "Remote failure"}
-		} else if strings.HasPrefix(line, "+ ") {
-			return users, nil
-		}
+	for _, line := range list {
 		args := strings.Split(line, ":")
 		if len(args) != 3 {
 			return nil, &backends.Error{Code: "EFAULT", Message: "Expected three values: " + line}
@@ -174,6 +152,7 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 			Active: (args[2] == "Y"),
 		})
 	}
+	return users, nil
 }
 
 func (client *Client) CreateGroup(name string) (gid int64, err *backends.Error) {
@@ -194,24 +173,13 @@ func (client *Client) DeleteGroup(groupgid string) *backends.Error {
 }
 
 func (client *Client) Groups() ([]backends.Group, *backends.Error) {
-	client.mutex.Lock()
-	defer client.mutex.Unlock()
-	_, err := client.Text.Cmd("groups")
+	list, err := client.listCmd("groups")
 	if err != nil {
-		return nil, &backends.Error{Code: "EFAULT", Message: err.Error()}
+		return nil, err
 	}
+
 	var groups []backends.Group
-	for {
-		line, rerr := client.Text.ReadLine()
-		if rerr != nil {
-			return nil, &backends.Error{Code: "EFAULT", Message: rerr.Error()}
-		}
-		if strings.HasPrefix(line, "- E") {
-			ret := strings.Split(line, " ")
-			return nil, &backends.Error{Code: ret[1], Message: "Remote failure"}
-		} else if strings.HasPrefix(line, "+ ") {
-			return groups, nil
-		}
+	for _, line := range list {
 		args := strings.Split(line, ":")
 		if len(args) != 2 {
 			return nil, &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
@@ -225,6 +193,7 @@ func (client *Client) Groups() ([]backends.Group, *backends.Error) {
 			Name: args[0],
 		})
 	}
+	return groups, nil
 }
 
 func (client *Client) GroupUsers(groupgid string) ([]backends.User, *backends.Error) {
@@ -284,4 +253,27 @@ func (client *Client) simpleIntCmd(format string, args ...interface{}) (int64, *
 		return 0, &backends.Error{Code: "EFAULT", Message: err.Error()}
 	}
 	return client.handleIntResponse()
+}
+
+func (client *Client) listCmd(format string, args ...interface{}) ([]string, *backends.Error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	_, err := client.Text.Cmd(fmt.Sprintf(format, args...))
+	if err != nil {
+		return nil, &backends.Error{Code: "EFAULT", Message: err.Error()}
+	}
+	var list []string
+	for {
+		line, rerr := client.Text.ReadLine()
+		if rerr != nil {
+			return nil, &backends.Error{Code: "EFAULT", Message: rerr.Error()}
+		}
+		if strings.HasPrefix(line, "- E") {
+			ret := strings.Split(line, " ")
+			return nil, &backends.Error{Code: ret[1], Message: "Remote failure"}
+		} else if strings.HasPrefix(line, "+ ") {
+			return list, nil
+		}
+		list = append(list, line)
+	}
 }

@@ -3,8 +3,8 @@ package server
 import (
 	"bufio"
 	"crypto/tls"
-	"net"
 	"fmt"
+	"net"
 	"strings"
 )
 
