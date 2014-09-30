@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -265,7 +264,7 @@ func (ip *Interpreter) intResponder(value int64, err *backends.Error) {
 	if err != nil {
 		ip.Err(err.Code)
 	} else {
-		ip.OkValue(fmt.Sprintf("%d", value))
+		ip.OkValue(value)
 	}
 }
 

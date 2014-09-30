@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"net"
+	"fmt"
 	"strings"
 )
 
@@ -27,12 +28,19 @@ func (context *Context) Write(line string) {
 	context.writer.Flush()
 }
 
+func (context *Context) Writef(format string, args ...interface{}) {
+	line := fmt.Sprintf(format, args...)
+	context.Log("<- " + line)
+	context.writer.WriteString(line + "\r\n")
+	context.writer.Flush()
+}
+
 func (context *Context) Ok() {
 	context.Write("+ OK")
 }
 
-func (context *Context) OkValue(value string) {
-	context.Write("+ OK " + value)
+func (context *Context) OkValue(value interface{}) {
+	context.Writef("+ OK %v", value)
 }
 
 func (context *Context) Err(code string) {
