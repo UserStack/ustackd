@@ -425,7 +425,6 @@ func TestStats(t *testing.T) {
 	}
 
 	client.LoginUser("foobar", "123456") // Failed login
-	now := time.Now().Format(time.RFC1123)
 	oldStats = newStats
 	newStats, _ = client.Stats()
 
@@ -449,17 +448,5 @@ func TestStats(t *testing.T) {
 		} else {
 			t.Fatalf("expected \"Failed logins\" to be incremented by 1, but is decremented by %d", -diffFailedLogins)
 		}
-	}
-
-	if last, ok := newStats["Last failed login user"]; !ok {
-		t.Fatalf("expected to have key \"Last failed login user\" but it has no such entry")
-	} else if last != "foobar" {
-		t.Fatalf("expected \"Last failed login user\": foobar, but is %s", last)
-	}
-
-	if at, ok := newStats["Last failed login at"]; !ok {
-		t.Fatalf("expected to have key \"Last failed login at\" but it has no such entry")
-	} else if at != now {
-		t.Fatalf("expected \"Last failed login at\": %s, but is %s", now, at)
 	}
 }

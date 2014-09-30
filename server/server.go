@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/client"
@@ -23,8 +22,6 @@ type Server struct {
 	listeners []net.Listener
 	Stats     struct {
 		Login, FailedLogin int
-		LastFailed         string
-		LastFailedAt       time.Time
 	}
 }
 

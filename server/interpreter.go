@@ -1,10 +1,8 @@
 package server
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/UserStack/ustackd/backends"
 )
@@ -120,24 +118,17 @@ func (ip *Interpreter) clientAuth(passwd string) {
 func (ip *Interpreter) stats(line string) {
 	ip.Writef("Successfull logins: %d", ip.Server.Stats.Login)
 	ip.Writef("Failed logins: %d", ip.Server.Stats.FailedLogin)
-	if ip.Server.Stats.LastFailed != "" {
-		ip.Write("Last failed login user: " + ip.Server.Stats.LastFailed)
-		ip.Writef("Last failed login at: %s", ip.Server.Stats.LastFailedAt.Format(time.RFC1123))
-	}
 	ip.Ok()
 }
 
 // login <name> <password>
 func (ip *Interpreter) login(line string) {
-	fmt.Printf("%+v", time.Now())
 	ip.withArgs(line, 2, func(args []string) {
 		uid, err := ip.Backend.LoginUser(args[0], args[1])
 		if err == nil {
 			ip.Server.Stats.Login++
 		} else {
 			ip.Server.Stats.FailedLogin++
-			ip.Server.Stats.LastFailed = args[0]
-			ip.Server.Stats.LastFailedAt = time.Now()
 		}
 		ip.intResponder(uid, err)
 	})
