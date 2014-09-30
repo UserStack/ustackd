@@ -1,6 +1,7 @@
 package backends
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -288,10 +289,6 @@ func TestDeleteUser(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) DeleteUser(nameuid string) *Error {
-//     return nil
-// }
-
 func TestUsers(t *testing.T) {
 	backend, dberr := NewSqliteBackend(":memory:")
 	if dberr != nil {
@@ -323,14 +320,29 @@ func TestUsers(t *testing.T) {
 	}
 }
 
-// func (backend *SqliteBackend) Users() ([]User, *Error) {
-//     return nil, nil
-// }
-//
-// func (backend *SqliteBackend) Group(name string) (int, *Error) {
-//     return 0, nil
-// }
-//
+func TestGroup(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	_, err := backend.CreateGroup("")
+	if err.Code != "EINVAL" {
+		t.Fatal("should return EINVAL instead of", err.Code)
+	}
+
+	gid, cerr := backend.CreateGroup("developers")
+	if gid <= 0 {
+		t.Fatal("should have created group", cerr.Code, cerr.Message)
+	}
+
+	_, eerr := backend.CreateGroup("developers")
+	if eerr.Code != "EEXIST" {
+		t.Fatal("should return EEXIST instead of", eerr.Code, eerr.Message)
+	}
+}
+
 // func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
 //     return nil
 // }
@@ -338,15 +350,67 @@ func TestUsers(t *testing.T) {
 // func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
 //     return nil
 // }
-//
-// func (backend *SqliteBackend) DeleteGroup(groupgid string) *Error {
-//     return nil
-// }
-//
-// func (backend *SqliteBackend) Groups() ([]Group, *Error) {
-//     return nil, nil
-// }
-//
+
+func TestDeleteGroup(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	err := backend.DeleteUser("")
+	if err.Code != "EINVAL" {
+		t.Fatal("should error on missing parameter")
+	}
+
+	// create two users
+	backend.CreateGroup("dev")
+	backend.CreateGroup("sales")
+
+	// now has two users
+	groups, _ := backend.Groups()
+	if len(groups) != 2 {
+		t.Fatal("user count should have been 2 but was", len(groups))
+	}
+
+	// delete one using uid one using name
+	derr1 := backend.DeleteGroup("dev")
+	if derr1 != nil {
+		t.Fatal("should not error on delete", derr1.Code, derr1.Message)
+	}
+	derr1 = backend.DeleteGroup("2")
+	if derr1 != nil {
+		t.Fatal("should not error on delete", derr1.Code, derr1.Message)
+	}
+	groups, _ = backend.Groups()
+	if len(groups) != 0 {
+		t.Fatal("user count should have been 0 but was", len(groups))
+	}
+}
+
+func TestGroups(t *testing.T) {
+	backend, dberr := NewSqliteBackend(":memory:")
+	if dberr != nil {
+		t.Fatal(dberr)
+	}
+	defer backend.Close()
+
+	gid0, _ := backend.CreateGroup("developers")
+	gid1, _ := backend.CreateGroup("sales")
+	gid2, _ := backend.CreateGroup("admins")
+	groups, _ := backend.Groups()
+
+	expected := []Group{
+		Group{Gid: gid0, Name: "developers"},
+		Group{Gid: gid1, Name: "sales"},
+		Group{Gid: gid2, Name: "admins"},
+	}
+
+	if !reflect.DeepEqual(expected, groups) {
+		t.Fatalf("expected %v\nto equal %v\n", expected, groups)
+	}
+}
+
 // func (backend *SqliteBackend) GroupUsers(groupgid string) ([]User, *Error) {
 //     return nil, nil
 // }

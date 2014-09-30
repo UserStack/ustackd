@@ -46,7 +46,7 @@ type Abstract interface {
 	UserGroups(nameuid string) ([]Group, *Error)
 	DeleteUser(nameuid string) *Error
 	Users() ([]User, *Error)
-	Group(name string) (int64, *Error)
+	CreateGroup(name string) (int64, *Error)
 	AddUserToGroup(nameuid string, groupgid string) *Error
 	RemoveUserFromGroup(nameuid string, groupgid string) *Error
 	DeleteGroup(groupgid string) *Error

@@ -231,7 +231,7 @@ func (ip *Interpreter) groupUsers(groupgid string) {
 
 // group <name>
 func (ip *Interpreter) group(name string) {
-	gid, err := ip.Backend.Group(name)
+	gid, err := ip.Backend.CreateGroup(name)
 	ip.intResponder(gid, err)
 }
 
@@ -249,7 +249,7 @@ func (ip *Interpreter) withArgs(line string, n int, fn withArgsFn) {
 	if len(args) == n {
 		fn(args)
 	} else {
-		ip.Err("EFAULT")
+		ip.Err("EINVAL")
 	}
 }
 

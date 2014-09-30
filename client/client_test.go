@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func uniqUsername() string {
+func uniqName() string {
 	return fmt.Sprintf("test-%d", time.Now().UnixNano())
 }
 
@@ -28,7 +28,7 @@ func TestConnectTls(t *testing.T) {
 	if aerr != nil {
 		t.Fatal("unable to establish tls", aerr)
 	}
-	username := uniqUsername()
+	username := uniqName()
 	defer client.DeleteUser(username)
 	id, serr := client.CreateUser(username, "secret")
 	if id <= 0 {
@@ -39,7 +39,7 @@ func TestConnectTls(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
+	username := uniqName()
 	defer client.DeleteUser(username)
 	id, err := client.CreateUser(username, "secret")
 	if id <= 0 {
@@ -50,7 +50,7 @@ func TestCreateUser(t *testing.T) {
 func TestDisableUser(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
+	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
 	err := client.DisableUser(username)
@@ -62,7 +62,7 @@ func TestDisableUser(t *testing.T) {
 func TestEnableUser(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
+	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
 	err := client.EnableUser(username)
@@ -74,7 +74,7 @@ func TestEnableUser(t *testing.T) {
 func TestSetGetUserData(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
+	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
 	client.SetUserData(username, "firstname", "Tester")
@@ -84,10 +84,32 @@ func TestSetGetUserData(t *testing.T) {
 	}
 }
 
+func TestLoginUser(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+	username := uniqName()
+	defer client.DeleteUser(username)
+	client.CreateUser(username, "secret")
+	_, lerr := client.LoginUser(username, "secret")
+	if lerr != nil {
+		t.Fatal("should be able to login", lerr)
+	}
+	client.DisableUser(username)
+	_, lerr1 := client.LoginUser(username, "secret")
+	if lerr1 == nil {
+		t.Fatal("should not be able to login, but was able -> not disabled")
+	}
+	client.EnableUser(username)
+	_, lerr2 := client.LoginUser(username, "secret")
+	if lerr2 != nil {
+		t.Fatal("should be able to login again", lerr2)
+	}
+}
+
 func TestChangeUserPassword(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
+	username := uniqName()
 
 	ierr1 := client.ChangeUserPassword("", "secret2", "secret2")
 	if ierr1.Code != "EINVAL" {
@@ -100,7 +122,7 @@ func TestChangeUserPassword(t *testing.T) {
 	}
 
 	ierr3 := client.ChangeUserPassword(username, "secret2", "")
-	if ierr3.Code != "EFAULT" {
+	if ierr3.Code != "EINVAL" {
 		t.Fatal("should fail since new passwd value is empty")
 	}
 
@@ -121,8 +143,8 @@ func TestChangeUserPassword(t *testing.T) {
 func TestChangeUserName(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
-	newusername := uniqUsername()
+	username := uniqName()
+	newusername := uniqName()
 
 	ierr1 := client.ChangeUserName("", "secret2", newusername)
 	if ierr1.Code != "EINVAL" {
@@ -135,7 +157,7 @@ func TestChangeUserName(t *testing.T) {
 	}
 
 	ierr3 := client.ChangeUserName(username, "secret2", "")
-	if ierr3.Code != "EFAULT" {
+	if ierr3.Code != "EINVAL" {
 		t.Fatal("should fail since new name value is empty")
 	}
 
@@ -152,32 +174,14 @@ func TestChangeUserName(t *testing.T) {
 	}
 }
 
-func TestLoginUser(t *testing.T) {
-	client, _ := Dial("localhost:35786")
-	defer client.Close()
-	username := uniqUsername()
-	defer client.DeleteUser(username)
-	client.CreateUser(username, "secret")
-	_, lerr := client.LoginUser(username, "secret")
-	if lerr != nil {
-		t.Fatal("should be able to login", lerr)
-	}
-	client.DisableUser(username)
-	_, lerr1 := client.LoginUser(username, "secret")
-	if lerr1 == nil {
-		t.Fatal("should not be able to login, but was able -> not disabled")
-	}
-	client.EnableUser(username)
-	_, lerr2 := client.LoginUser(username, "secret")
-	if lerr2 != nil {
-		t.Fatal("should be able to login again", lerr2)
-	}
-}
+// func (backend *SqliteBackend) UserGroups(nameuid string) ([]Group, *Error) {
+//     return nil, nil
+// }
 
 func TestDeleteUser(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username := uniqUsername()
+	username := uniqName()
 	client.CreateUser(username, "secret")
 	_, lerr := client.LoginUser(username, "secret")
 	if lerr != nil {
@@ -196,9 +200,9 @@ func TestDeleteUser(t *testing.T) {
 func TestUsers(t *testing.T) {
 	client, _ := Dial("localhost:35786")
 	defer client.Close()
-	username0 := uniqUsername()
+	username0 := uniqName()
 	uid0, _ := client.CreateUser(username0, "secret")
-	username1 := uniqUsername()
+	username1 := uniqName()
 	uid1, _ := client.CreateUser(username1, "secret")
 	users, _ := client.Users()
 	if len(users) < 2 {
@@ -217,3 +221,95 @@ func TestUsers(t *testing.T) {
 			username0, username1, users)
 	}
 }
+
+func TestGroup(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+	group := uniqName()
+
+	_, err := client.CreateGroup("")
+	if err.Code != "EFAULT" {
+		t.Fatal("should return EINVAL instead of", err.Code)
+	}
+
+	gid, cerr := client.CreateGroup(group)
+	defer client.DeleteGroup(group)
+	if gid <= 0 {
+		t.Fatal("should have created group", cerr.Code, cerr.Message)
+	}
+
+	_, eerr := client.CreateGroup(group)
+	if eerr.Code != "EEXIST" {
+		t.Fatal("should return EEXIST instead of", eerr.Code, eerr.Message)
+	}
+}
+
+// func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
+//     return nil
+// }
+//
+// func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid string) *Error {
+//     return nil
+// }
+
+func TestDeleteGroup(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+
+	group0 := uniqName()
+	group1 := uniqName()
+
+	err := client.DeleteUser("")
+	if err.Code != "EFAULT" {
+		t.Fatal("should error on missing parameter", err.Code)
+	}
+
+	// create two users
+	client.CreateGroup(group0)
+	gid, _ := client.CreateGroup(group1)
+
+	// now has two users
+	groups, _ := client.Groups()
+	if len(groups) != 2 {
+		t.Fatal("user count should have been 2 but was", len(groups))
+	}
+
+	// delete one using uid one using name
+	derr1 := client.DeleteGroup(group0)
+	if derr1 != nil {
+		t.Fatal("should not error on delete", derr1.Code, derr1.Message)
+	}
+	derr1 = client.DeleteGroup(fmt.Sprintf("%d", gid))
+	if derr1 != nil {
+		t.Fatal("should not error on delete", derr1.Code, derr1.Message)
+	}
+	groups, _ = client.Groups()
+	if len(groups) != 0 {
+		t.Fatal("user count should have been 0 but was", len(groups))
+	}
+}
+
+func TestGroups(t *testing.T) {
+	client, _ := Dial("localhost:35786")
+	defer client.Close()
+
+	group0 := uniqName()
+	group1 := uniqName()
+	group2 := uniqName()
+
+	client.CreateGroup(group0)
+	defer client.DeleteGroup(group0)
+	client.CreateGroup(group1)
+	defer client.DeleteGroup(group1)
+	client.CreateGroup(group2)
+	defer client.DeleteGroup(group2)
+	groups, _ := client.Groups()
+
+	if len(groups) < 3 {
+		t.Fatalf("expected to have at least 3 groups but got %v", groups)
+	}
+}
+
+// func (backend *SqliteBackend) GroupUsers(groupgid string) ([]User, *Error) {
+//     return nil, nil
+// }

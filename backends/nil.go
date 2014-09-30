@@ -47,7 +47,7 @@ func (backend *NilBackend) Users() ([]User, *Error) {
 	return nil, nil
 }
 
-func (backend *NilBackend) Group(name string) (int64, *Error) {
+func (backend *NilBackend) CreateGroup(name string) (int64, *Error) {
 	return 0, nil
 }
 

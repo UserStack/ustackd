@@ -176,8 +176,9 @@ func (client *Client) Users() ([]backends.User, *backends.Error) {
 	}
 }
 
-func (client *Client) Group(name string) (int64, *backends.Error) {
-	return 0, nil
+func (client *Client) CreateGroup(name string) (gid int64, err *backends.Error) {
+	gid, err = client.simpleIntCmd("group %s", name)
+	return
 }
 
 func (client *Client) AddUserToGroup(nameuid string, groupgid string) *backends.Error {
@@ -189,11 +190,41 @@ func (client *Client) RemoveUserFromGroup(nameuid string, groupgid string) *back
 }
 
 func (client *Client) DeleteGroup(groupgid string) *backends.Error {
-	return nil
+	return client.simpleCmd("delete group %s", groupgid)
 }
 
 func (client *Client) Groups() ([]backends.Group, *backends.Error) {
-	return nil, nil
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	_, err := client.Text.Cmd("groups")
+	if err != nil {
+		return nil, &backends.Error{Code: "EFAULT", Message: err.Error()}
+	}
+	var groups []backends.Group
+	for {
+		line, rerr := client.Text.ReadLine()
+		if rerr != nil {
+			return nil, &backends.Error{Code: "EFAULT", Message: rerr.Error()}
+		}
+		if strings.HasPrefix(line, "- E") {
+			ret := strings.Split(line, " ")
+			return nil, &backends.Error{Code: ret[1], Message: "Remote failure"}
+		} else if strings.HasPrefix(line, "+ ") {
+			return groups, nil
+		}
+		args := strings.Split(line, ":")
+		if len(args) != 2 {
+			return nil, &backends.Error{Code: "EFAULT", Message: "Expected two values: " + line}
+		}
+		gid, perr := strconv.ParseInt(args[1], 10, 64)
+		if perr != nil {
+			return nil, &backends.Error{Code: "EFAULT", Message: perr.Error()}
+		}
+		groups = append(groups, backends.Group{
+			Gid:  gid,
+			Name: args[0],
+		})
+	}
 }
 
 func (client *Client) GroupUsers(groupgid string) ([]backends.User, *backends.Error) {

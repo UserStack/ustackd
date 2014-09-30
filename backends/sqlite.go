@@ -56,6 +56,9 @@ const (
 		WHERE uid = ? AND password = ?`
 	CHANGE_USER_NAME_STMT = `UPDATE Users SET name = ?
 		WHERE uid = ? AND password = ?`
+	CREATE_GROUP_STMT = `INSERT INTO Groups (name) VALUES (?)`
+	GROUPS_STMT       = `SELECT name, gid FROM Groups`
+	DELETE_GROUP_STMT = `DELETE FROM Groups WHERE gid = ? OR name = ?;`
 )
 
 var PREPARE = []string{
@@ -79,6 +82,9 @@ type SqliteBackend struct {
 	getUserDataStmt        *sql.Stmt
 	changeUserPasswordStmt *sql.Stmt
 	changeUserNameStmt     *sql.Stmt
+	createGroupStmt        *sql.Stmt
+	groupsStmt             *sql.Stmt
+	deleteGroupStmt        *sql.Stmt
 }
 
 func NewSqliteBackend(url string) (SqliteBackend, error) {
@@ -157,6 +163,18 @@ func (backend *SqliteBackend) init() error {
 		return err
 	}
 	backend.changeUserNameStmt, err = backend.db.Prepare(CHANGE_USER_NAME_STMT)
+	if err != nil {
+		return err
+	}
+	backend.createGroupStmt, err = backend.db.Prepare(CREATE_GROUP_STMT)
+	if err != nil {
+		return err
+	}
+	backend.groupsStmt, err = backend.db.Prepare(GROUPS_STMT)
+	if err != nil {
+		return err
+	}
+	backend.deleteGroupStmt, err = backend.db.Prepare(DELETE_GROUP_STMT)
 	if err != nil {
 		return err
 	}
@@ -345,8 +363,25 @@ func (backend *SqliteBackend) Users() ([]User, *Error) {
 	return users, nil
 }
 
-func (backend *SqliteBackend) Group(name string) (int64, *Error) {
-	return 0, nil
+func (backend *SqliteBackend) CreateGroup(name string) (int64, *Error) {
+	if name == "" {
+		return 0, &Error{"EINVAL", "Invalid group name"}
+	}
+	result, err := backend.createGroupStmt.Exec(name)
+	if err != nil {
+		// after error occured, the statement is broken, we need to recreate it
+		backend.createGroupStmt.Close()
+		backend.createGroupStmt, _ = backend.db.Prepare(CREATE_GROUP_STMT)
+		return 0, &Error{"EEXIST", err.Error()}
+	}
+	var uid int64
+	uid, err = result.LastInsertId()
+	if err == nil {
+		return uid, nil
+	} else {
+		fmt.Printf("  Err %s\n", err)
+		return 0, &Error{"EFAULT", err.Error()}
+	}
 }
 
 func (backend *SqliteBackend) AddUserToGroup(nameuid string, groupgid string) *Error {
@@ -358,11 +393,42 @@ func (backend *SqliteBackend) RemoveUserFromGroup(nameuid string, groupgid strin
 }
 
 func (backend *SqliteBackend) DeleteGroup(groupgid string) *Error {
+	if groupgid == "" {
+		return &Error{"EINVAL", "Name or gid has to be passed"}
+	}
+
+	result, err := backend.deleteGroupStmt.Exec(groupgid, groupgid)
+	if err != nil {
+		return &Error{"EFAULT", err.Error()}
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return &Error{"EFAULT", err.Error()}
+	}
+
+	if count < 1 {
+		return &Error{"ENOENT", "Name or gid unknown"}
+	}
 	return nil
 }
 
 func (backend *SqliteBackend) Groups() ([]Group, *Error) {
-	return nil, nil
+	var groups []Group
+	rows, err := backend.groupsStmt.Query()
+	defer rows.Close()
+	if err != nil {
+		return nil, &Error{"EFAULT", err.Error()}
+	}
+	for rows.Next() {
+		var gid int64
+		var name string
+		err = rows.Scan(&name, &gid)
+		if err != nil {
+			return nil, &Error{"EFAULT", err.Error()}
+		}
+		groups = append(groups, Group{gid, name})
+	}
+	return groups, nil
 }
 
 func (backend *SqliteBackend) GroupUsers(groupgid string) ([]User, *Error) {
