@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -383,5 +384,82 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 	users, _ = client.GroupUsers(admins)
 	if len(users) != 0 {
 		t.Fatalf("expected to have no admin, got %v", users)
+	}
+}
+
+func TestStats(t *testing.T) {
+	client, close := clientServer()
+	defer close()
+
+	oldStats, _ := client.Stats()
+	if _, ok := oldStats["Successfull logins"]; !ok {
+		t.Fatalf("expected to have key \"Successfull logins\" but it has no such entry")
+	}
+
+	username := uniqName()
+	client.CreateUser(username, "secret")
+	defer client.DeleteUser(username)
+	client.LoginUser(username, "secret") // Successfull login
+
+	newStats, _ := client.Stats()
+	newLogins, _ := strconv.Atoi(newStats["Successfull logins"])
+	oldLogins, _ := strconv.Atoi(oldStats["Successfull logins"])
+	diffLogins := newLogins - oldLogins
+	if diffLogins != 1 {
+		if diffLogins >= 0 {
+			t.Fatalf("expected \"Successfull logins\" to be incremented by 1, but is incremented by %d", diffLogins)
+		} else {
+			t.Fatalf("expected \"Successfull logins\" to be incremented by 1, but is decremented by %d", -diffLogins)
+		}
+	}
+
+	newFailedLogins, _ := strconv.Atoi(newStats["Failed logins"])
+	oldFailedLogins, _ := strconv.Atoi(oldStats["Failed logins"])
+	diffFailedLogins := newFailedLogins - oldFailedLogins
+	if diffFailedLogins != 0 {
+		if diffFailedLogins >= 0 {
+			t.Fatalf("expected \"Failed logins\" to be incremented by 0, but is incremented by %d", diffFailedLogins)
+		} else {
+			t.Fatalf("expected \"Failed logins\" to be incremented by 0, but is decremented by %d", -diffFailedLogins)
+		}
+	}
+
+	client.LoginUser("foobar", "123456") // Failed login
+	now := time.Now().Format(time.RFC1123)
+	oldStats = newStats
+	newStats, _ = client.Stats()
+
+	newLogins, _ = strconv.Atoi(newStats["Successfull logins"])
+	oldLogins, _ = strconv.Atoi(oldStats["Successfull logins"])
+	diffLogins = newLogins - oldLogins
+	if diffLogins != 0 {
+		if diffLogins >= 0 {
+			t.Fatalf("expected \"Successfull logins\" to be incremented by 0, but is incremented by %d", diffLogins)
+		} else {
+			t.Fatalf("expected \"Successfull logins\" to be incremented by 0, but is decremented by %d", -diffLogins)
+		}
+	}
+
+	newFailedLogins, _ = strconv.Atoi(newStats["Failed logins"])
+	oldFailedLogins, _ = strconv.Atoi(oldStats["Failed logins"])
+	diffFailedLogins = newFailedLogins - oldFailedLogins
+	if diffFailedLogins != 1 {
+		if diffFailedLogins >= 0 {
+			t.Fatalf("expected \"Failed logins\" to be incremented by 1, but is incremented by %d", diffFailedLogins)
+		} else {
+			t.Fatalf("expected \"Failed logins\" to be incremented by 1, but is decremented by %d", -diffFailedLogins)
+		}
+	}
+
+	if last, ok := newStats["Last failed login user"]; !ok {
+		t.Fatalf("expected to have key \"Last failed login user\" but it has no such entry")
+	} else if last != "foobar" {
+		t.Fatalf("expected \"Last failed login user\": foobar, but is %s", last)
+	}
+
+	if at, ok := newStats["Last failed login at"]; !ok {
+		t.Fatalf("expected to have key \"Last failed login at\" but it has no such entry")
+	} else if at != now {
+		t.Fatalf("expected \"Last failed login at\": %s, but is %s", now, at)
 	}
 }
