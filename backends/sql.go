@@ -139,9 +139,9 @@ func (backend *SqlBackend) init(prepare []string) error {
 	if err != nil {
 		return err
 	}
-	backend.statsStmt, err = backend.db.Prepare(`SELECT
-		(SELECT COUNT(*) FROM Users) AS UserCount,
-		(SELECT COUNT(*) FROM Groups) AS GroupCount`)
+	backend.statsStmt, err = backend.db.Prepare(`SELECT 'Users', COUNT(*) FROM Users
+												UNION
+												SELECT 'Groups', COUNT(*) FROM Groups`)
 	if err != nil {
 		return err
 	}
@@ -471,26 +471,22 @@ func (backend *SqlBackend) GroupUsers(groupgid string) ([]User, *Error) {
 	return users, nil
 }
 
-func (backend *SqlBackend) Stats() (stats map[string]int, err *Error) {
-	stats = make(map[string]int)
+func (backend *SqlBackend) Stats() (stats map[string]int64, err *Error) {
+	stats = make(map[string]int64)
 	rows, rerr := backend.statsStmt.Query()
 	defer rows.Close()
 	if rerr != nil {
 		err = &Error{"EFAULT", rerr.Error()}
 		return
 	}
-	if !rows.Next() {
-		err = &Error{"ENOENT", "no data for this query"}
-		return
-	}
-
-	var users, groups int
-	serr := rows.Scan(&users, &groups)
-	stats["Users"] = users
-	stats["Groups"] = groups
-
-	if serr != nil {
-		err = &Error{"EFAULT", serr.Error()}
+	for rows.Next() {
+		var key string
+		var value int64
+		serr := rows.Scan(&key, &value)
+		if serr != nil {
+			return nil, &Error{"EFAULT", serr.Error()}
+		}
+		stats[key] = value
 	}
 	return
 }

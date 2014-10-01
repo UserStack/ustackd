@@ -397,8 +397,8 @@ func TestStats(t *testing.T) {
 
 	username := uniqName()
 	client.CreateUser(username, "secret")
-	userCount := len(users) + 1
-	groupCount := len(groups)
+	userCount := int64(len(users) + 1)
+	groupCount := int64(len(groups))
 	defer client.DeleteUser(username)
 	client.LoginUser(username, "secret") // Successfull login
 	client.LoginUser("foobar", "123456") // Failed login
@@ -408,7 +408,7 @@ func TestStats(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	stats, _ := client.Stats()
-	expected := map[string]int{
+	expected := map[string]int64{
 		"Connects":                             1,
 		"Disconnects":                          0,
 		"Active Connections":                   1,
@@ -429,7 +429,7 @@ func TestStats(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	stats, _ = client.Stats()
-	expected = map[string]int{
+	expected = map[string]int64{
 		"Connects":                             1,
 		"Disconnects":                          1,
 		"Active Connections":                   0,
