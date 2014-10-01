@@ -391,15 +391,19 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 func TestStats(t *testing.T) {
 	client := newClient()
 	defer client.Close()
+	users, _ := client.Users()
 	serverInstance.Stats.Reset()
 
 	username := uniqName()
 	client.CreateUser(username, "secret")
+	userCount := len(users) + 1
 	defer client.DeleteUser(username)
 	client.LoginUser(username, "secret") // Successfull login
 	client.LoginUser("foobar", "123456") // Failed login
 	client.LoginUser("foobar", "123456") // twice
 	tempClient := newClient()            // Connects++
+	// since the server and client are not in sync sleep
+	time.Sleep(100 * time.Millisecond)
 
 	stats, _ := client.Stats()
 	expected := map[string]int{
@@ -411,13 +415,15 @@ func TestStats(t *testing.T) {
 		"Unrestricted Commands":                0,
 		"Restricted Commands":                  4,
 		"Access denied on Restricted Commands": 0,
-		"Users": 8,
+		"Users": userCount,
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %v to be %v", stats, expected)
 	}
 
 	tempClient.Close() // Disconnects++
+	// since the server and client are not in sync sleep
+	time.Sleep(100 * time.Millisecond)
 
 	stats, _ = client.Stats()
 	expected = map[string]int{
@@ -429,7 +435,7 @@ func TestStats(t *testing.T) {
 		"Unrestricted Commands":                1,
 		"Restricted Commands":                  5,
 		"Access denied on Restricted Commands": 0,
-		"Users": 8,
+		"Users": userCount,
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %v to be %v", stats, expected)
