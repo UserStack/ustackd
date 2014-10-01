@@ -158,7 +158,9 @@ func (backend *MysqlBackend) init(prepare []string) error {
 	if err != nil {
 		panic(err)
 	}
-	backend.statsStmt, err = backend.db.Prepare(`SELECT COUNT(Uid) AS UserCount FROM Users`)
+	backend.statsStmt, err = backend.db.Prepare(`SELECT 'Users', COUNT(*) FROM Users
+												UNION
+												SELECT 'Groups', COUNT(*) FROM Groups`)
 	if err != nil {
 		panic(err)
 	}
