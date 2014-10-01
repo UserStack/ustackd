@@ -41,91 +41,91 @@ func (backend *SqlBackend) init(prepare []string) error {
 	for _, stmt := range prepare {
 		_, err = backend.db.Exec(stmt)
 		if err != nil {
-			return err
+			panic(err)
 		}
 	}
 	backend.createUserStmt, err = backend.db.Prepare(`INSERT INTO Users
 		(name, password) VALUES ($1, $2);`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.usersStmt, err = backend.db.Prepare(`SELECT name, uid, state FROM Users`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.deleteUserStmt, err = backend.db.Prepare(`DELETE FROM Users WHERE uid = $1 OR name = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.loginUserStmt, err = backend.db.Prepare(fmt.Sprintf(
 		"SELECT uid FROM Users WHERE name = $1 AND password = $2 AND state = %d;",
 		STATUS_ACTIVE))
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.setUserStateStmt, err = backend.db.Prepare(`UPDATE Users
 		SET state = $1
 		WHERE name = $2 OR uid = $3;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.uidForNameUidStmt, err = backend.db.Prepare(`SELECT uid FROM Users
 		WHERE name = $1 OR uid = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.setUserDataStmt, err = backend.db.Prepare(`INSERT INTO UserValues
 		(uid, key, value) VALUES ($1, $2, $3);`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.getUserDataStmt, err = backend.db.Prepare(`SELECT value FROM UserValues
 		WHERE uid = $1 AND key = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.changeUserPasswordStmt, err = backend.db.Prepare(`UPDATE Users
 		SET password = $1
 		WHERE uid = $2 AND password = $3;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.changeUserNameStmt, err = backend.db.Prepare(`UPDATE Users
 		SET name = $1
 		WHERE uid = $2 AND password = $3;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.userGroupsStmt, err = backend.db.Prepare(`SELECT g.name, g.gid
 		FROM Groups g
 		JOIN UserGroups ug ON (ug.gid = g.gid)
 		WHERE ug.uid = $1`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.createGroupStmt, err = backend.db.Prepare(`INSERT INTO Groups (name)
 		VALUES ($1);`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.groupsStmt, err = backend.db.Prepare(`SELECT name, gid FROM Groups;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.deleteGroupStmt, err = backend.db.Prepare(`DELETE FROM Groups
 		WHERE gid = $1 OR name = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.gidForNameGidStmt, err = backend.db.Prepare(`SELECT gid FROM Groups
 		WHERE gid = $1 OR name = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.addUserToGroupStmt, err = backend.db.Prepare(
 		`INSERT INTO UserGroups (uid, gid) VALUES ($1, $2);`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.removeUserFromGroupStmt, err = backend.db.Prepare(`DELETE FROM UserGroups
 		WHERE uid = $1 AND gid = $2`)
@@ -137,13 +137,13 @@ func (backend *SqlBackend) init(prepare []string) error {
 		JOIN UserGroups ug ON (ug.uid = u.uid)
 		WHERE ug.gid = $1`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.statsStmt, err = backend.db.Prepare(`SELECT 'Users', COUNT(*) FROM Users
 												UNION
 												SELECT 'Groups', COUNT(*) FROM Groups`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	return nil
 }

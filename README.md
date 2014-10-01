@@ -151,6 +151,17 @@ for example connection strings.
     [postgres]
     url = "user=postgres dbname=ustackd sslmode=disable"
 
+### mysql
+
+MySQL implementation of the backend. See [https://github.com/go-sql-driver/mysql](https://github.com/go-sql-driver/mysql)
+for example connection strings.
+
+    [Daemon]
+    backend = mysql
+    
+    [mysql]
+    url = "travis@unix(/tmp/mysql.sock)/ustackd?charset=utf8"
+
 ### proxy
 
 Proxy backend implementation connects to a different ustackd and proxies requests.
@@ -448,8 +459,23 @@ Return Codes:
     initdb pgdata
     postgres -D pgdata
     
-In a seperate terminal:
+In a separate terminal:
 
     createdb ustackd
     psql -U $USER -c "CREATE USER postgres;" ustackd
     psql -U $USER -c "GRANT ALL PRIVILEGES ON DATABASE ustackd TO postgres;" ustackd
+    TEST_CONFIG=config/test_psql.conf go test -v ./...
+
+### MySQL
+
+    brew install mysql
+    mkdir -p tmp/mysql
+    mysql_install_db --datadir=`pwd`/tmp/mysql --basedir=`brew --prefix mysql`
+    mysqld --datadir=`pwd`/tmp/mysql
+
+In a separate terminal:
+
+    mysql -u root -e "create database ustackd"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'travis'@'localhost'"
+    TEST_CONFIG=config/test_mysql.conf go test -v ./...
+    

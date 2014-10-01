@@ -19,7 +19,7 @@ test: clean vet sqlite
 sqlite:
 	go test -v ./...
 	
-ci: test postgresql
+ci: test postgresql mysql
 	
 # tailored to travis ci
 postgresql:

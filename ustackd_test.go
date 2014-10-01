@@ -80,7 +80,11 @@ func TestDisableUser(t *testing.T) {
 	client.CreateUser(username, "secret")
 	err := client.DisableUser(username)
 	if err != nil {
-		t.Fatal("unable to disable user", err)
+		t.Fatalf("unable to disable user, %v", err)
+	}
+	uid, lerr := client.LoginUser(username, "secret")
+	if uid != 0 {
+		t.Fatalf("should not be able to login, %v", lerr)
 	}
 }
 
@@ -90,9 +94,21 @@ func TestEnableUser(t *testing.T) {
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
+	derr := client.DisableUser(username)
+	if derr != nil {
+		t.Fatalf("unable to disable user, %v", derr)
+	}
+	uid, lerr := client.LoginUser(username, "secret")
+	if uid != 0 {
+		t.Fatalf("should not be able to login, %v", lerr)
+	}
 	err := client.EnableUser(username)
 	if err != nil {
-		t.Fatal("unable to enable user", err)
+		t.Fatalf("unable to enable user, %v", err)
+	}
+	uid, serr := client.LoginUser(username, "secret")
+	if uid == 0 {
+		t.Fatalf("should be able to login, %v", serr)
 	}
 }
 

@@ -67,44 +67,44 @@ func (backend *PostgresBackend) init(sqls []string) (err error) {
 	$$ LANGUAGE plpgsql;`)
 	err = backend.SqlBackend.init(sqls)
 	if err != nil {
-		return
+		panic(err)
 	}
 	backend.SqlBackend.createUserStmt, err = backend.db.Prepare(
 		`INSERT INTO Users (name, password) VALUES ($1, $2) RETURNING uid;`)
 	if err != nil {
-		return
+		panic(err)
 	}
 	backend.SqlBackend.createGroupStmt, err = backend.db.Prepare(
 		`INSERT INTO Groups (name) VALUES ($1) RETURNING gid;`)
 	if err != nil {
-		return
+		panic(err)
 	}
 	backend.SqlBackend.deleteUserStmt, err = backend.db.Prepare(
 		`DELETE FROM Users
 		WHERE uid = convert_to_integer($1) OR name = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.SqlBackend.setUserStateStmt, err = backend.db.Prepare(`UPDATE Users
 		SET state = $1
 		WHERE name = $2 OR uid = convert_to_integer($3);`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.SqlBackend.uidForNameUidStmt, err = backend.db.Prepare(`SELECT uid FROM Users
 		WHERE name = $1 OR uid = convert_to_integer($2);`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.SqlBackend.deleteGroupStmt, err = backend.db.Prepare(`DELETE FROM Groups
 		WHERE gid = convert_to_integer($1) OR name = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	backend.SqlBackend.gidForNameGidStmt, err = backend.db.Prepare(`SELECT gid FROM Groups
 		WHERE gid = convert_to_integer($1) OR name = $2;`)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	return
 }
