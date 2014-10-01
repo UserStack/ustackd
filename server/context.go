@@ -62,9 +62,9 @@ func (context *Context) Realm() {
 }
 
 func (context *Context) Close() {
-	context.conn.Close()
 	context.Log("Client disconnected")
 	context.Server.Stats.Disconnects++
+	context.conn.Close()
 }
 
 func (context *Context) Handle() {

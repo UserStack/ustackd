@@ -70,7 +70,7 @@ func (backend *PostgresBackend) init(sqls []string) (err error) {
 		return
 	}
 	backend.SqlBackend.createUserStmt, err = backend.db.Prepare(
-		`INSERT INTO Users (name, password) VALUES ($1, $2) RETURNING uid;`)  
+		`INSERT INTO Users (name, password) VALUES ($1, $2) RETURNING uid;`)
 	if err != nil {
 		return
 	}

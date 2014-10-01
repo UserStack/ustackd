@@ -15,7 +15,7 @@ import (
 var serverInstance *server.Server
 var started bool
 
-func clientServer() (*client.Client, func()) {
+func newClient() *client.Client {
 	if started == false {
 		serverInstance = server.NewServer()
 		var configPath string
@@ -34,10 +34,7 @@ func clientServer() (*client.Client, func()) {
 	if err != nil {
 		panic("client was unable to connect to server: " + err.Error())
 	}
-	close := func() {
-		client.Close()
-	}
-	return client, close
+	return client
 }
 
 func uniqName() string {
@@ -45,13 +42,13 @@ func uniqName() string {
 }
 
 func TestConnect(t *testing.T) {
-	_, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 }
 
 func TestConnectTls(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	aerr := client.StartTlsWithCert("config/cert.pem")
 	if aerr != nil {
 		t.Fatal("unable to establish tls", aerr)
@@ -65,8 +62,8 @@ func TestConnectTls(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	id, err := client.CreateUser(username, "secret")
@@ -76,8 +73,8 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestDisableUser(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -88,8 +85,8 @@ func TestDisableUser(t *testing.T) {
 }
 
 func TestEnableUser(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -100,8 +97,8 @@ func TestEnableUser(t *testing.T) {
 }
 
 func TestSetGetUserData(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -113,8 +110,8 @@ func TestSetGetUserData(t *testing.T) {
 }
 
 func TestLoginUser(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	defer client.DeleteUser(username)
 	client.CreateUser(username, "secret")
@@ -135,8 +132,8 @@ func TestLoginUser(t *testing.T) {
 }
 
 func TestChangeUserPassword(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 
 	ierr1 := client.ChangeUserPassword("", "secret2", "secret2")
@@ -169,8 +166,8 @@ func TestChangeUserPassword(t *testing.T) {
 }
 
 func TestChangeUserName(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	newusername := uniqName()
 
@@ -203,8 +200,8 @@ func TestChangeUserName(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username := uniqName()
 	client.CreateUser(username, "secret")
 	_, lerr := client.LoginUser(username, "secret")
@@ -222,8 +219,8 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestUsers(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	username0 := uniqName()
 	uid0, _ := client.CreateUser(username0, "secret")
 	username1 := uniqName()
@@ -247,8 +244,8 @@ func TestUsers(t *testing.T) {
 }
 
 func TestGroup(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	group := uniqName()
 
 	_, err := client.CreateGroup("")
@@ -269,8 +266,8 @@ func TestGroup(t *testing.T) {
 }
 
 func TestDeleteGroup(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 
 	group0 := uniqName()
 	group1 := uniqName()
@@ -307,8 +304,8 @@ func TestDeleteGroup(t *testing.T) {
 }
 
 func TestGroups(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 
 	group0 := uniqName()
 	group1 := uniqName()
@@ -328,8 +325,8 @@ func TestGroups(t *testing.T) {
 }
 
 func TestUsersAndGroupsAssociations(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 
 	joe := uniqName()
 	mike := uniqName()
@@ -392,8 +389,8 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 }
 
 func TestStats(t *testing.T) {
-	client, close := clientServer()
-	defer close()
+	client := newClient()
+	defer client.Close()
 	serverInstance.Stats.Reset()
 
 	username := uniqName()
@@ -402,7 +399,7 @@ func TestStats(t *testing.T) {
 	client.LoginUser(username, "secret") // Successfull login
 	client.LoginUser("foobar", "123456") // Failed login
 	client.LoginUser("foobar", "123456") // twice
-	tempClient, _ := clientServer()      // Connects++
+	tempClient := newClient()            // Connects++
 
 	stats, _ := client.Stats()
 	expected := map[string]int{
