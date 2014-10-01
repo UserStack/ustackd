@@ -139,7 +139,9 @@ func (backend *SqlBackend) init(prepare []string) error {
 	if err != nil {
 		return err
 	}
-	backend.statsStmt, err = backend.db.Prepare(`SELECT COUNT(Uid) AS UserCount FROM Users`)
+	backend.statsStmt, err = backend.db.Prepare(`SELECT
+		(SELECT COUNT(*) FROM Users) AS UserCount,
+		(SELECT COUNT(*) FROM Groups) AS GroupCount`)
 	if err != nil {
 		return err
 	}
@@ -478,13 +480,14 @@ func (backend *SqlBackend) Stats() (stats map[string]int, err *Error) {
 		return
 	}
 	if !rows.Next() {
-		err = &Error{"ENOENT", "Name unknown"}
+		err = &Error{"ENOENT", "no data for this query"}
 		return
 	}
 
-	var userCount int
-	serr := rows.Scan(&userCount)
-	stats["Users"] = userCount
+	var users, groups int
+	serr := rows.Scan(&users, &groups)
+	stats["Users"] = users
+	stats["Groups"] = groups
 
 	if serr != nil {
 		err = &Error{"EFAULT", serr.Error()}

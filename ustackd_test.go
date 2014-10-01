@@ -392,11 +392,13 @@ func TestStats(t *testing.T) {
 	client := newClient()
 	defer client.Close()
 	users, _ := client.Users()
+	groups, _ := client.Groups()
 	serverInstance.Stats.Reset()
 
 	username := uniqName()
 	client.CreateUser(username, "secret")
 	userCount := len(users) + 1
+	groupCount := len(groups)
 	defer client.DeleteUser(username)
 	client.LoginUser(username, "secret") // Successfull login
 	client.LoginUser("foobar", "123456") // Failed login
@@ -415,7 +417,8 @@ func TestStats(t *testing.T) {
 		"Unrestricted Commands":                0,
 		"Restricted Commands":                  4,
 		"Access denied on Restricted Commands": 0,
-		"Users": userCount,
+		"Users":  userCount,
+		"Groups": groupCount,
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %v to be %v", stats, expected)
@@ -435,7 +438,8 @@ func TestStats(t *testing.T) {
 		"Unrestricted Commands":                1,
 		"Restricted Commands":                  5,
 		"Access denied on Restricted Commands": 0,
-		"Users": userCount,
+		"Users":  userCount,
+		"Groups": groupCount,
 	}
 	if !reflect.DeepEqual(stats, expected) {
 		t.Fatalf("expected %v to be %v", stats, expected)
