@@ -34,6 +34,10 @@ type Error struct {
 	Message string
 }
 
+func (e *Error) Error() string {
+	return fmt.Sprintf("[%s] %s", e.Code, e.Message)
+}
+
 type Abstract interface {
 	CreateUser(name string, password string) (int64, *Error)
 	DisableUser(nameuid string) *Error
