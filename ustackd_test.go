@@ -547,3 +547,17 @@ func BenchmarkDeleteUser(b *testing.B) {
 		b.StopTimer()
 	}
 }
+
+func BenchmarkLogin(b *testing.B) {
+	client := newClient()
+	defer client.Close()
+
+	client.CreateUser("testlogin", "secret")
+	defer client.DeleteUser("testlogin")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		client.LoginUser("testlogin", "secret")
+	}
+	b.StopTimer()
+}
