@@ -290,6 +290,9 @@ func TestDeleteGroup(t *testing.T) {
 	client := newClient()
 	defer client.Close()
 
+	groups, _ := client.Groups()
+	groupCount := len(groups)
+
 	group0 := uniqName()
 	group1 := uniqName()
 
@@ -304,9 +307,9 @@ func TestDeleteGroup(t *testing.T) {
 	defer client.DeleteGroup(group1)
 
 	// now has two users
-	groups, _ := client.Groups()
-	if len(groups) != 2 {
-		t.Fatal("user count should have been 2 but was", len(groups))
+	groups, _ = client.Groups()
+	if diff := len(groups) - groupCount; diff != 2 {
+		t.Fatal("group count should have been increased by 2, but was increased by %d", diff)
 	}
 
 	// delete one using uid one using name
@@ -319,8 +322,8 @@ func TestDeleteGroup(t *testing.T) {
 		t.Fatal("should not error on delete", derr1.Code, derr1.Message)
 	}
 	groups, _ = client.Groups()
-	if len(groups) != 0 {
-		t.Fatal("group count should have been 0 but was", len(groups))
+	if len(groups) != groupCount {
+		t.Fatalf("group count should have been back to %d but was %d", groupCount, len(groups))
 	}
 }
 
