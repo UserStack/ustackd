@@ -46,3 +46,11 @@ cert:
 clean:
 	go clean
 	rm -f ustackd.db ustackd.pid ${PID_FILE}
+
+coverage:
+	go get -u code.google.com/p/go.tools/cmd/cover
+	go test ./... -cover
+	go test ./server -coverprofile=c.out
+	go tool cover -html=c.out -o=cover/server.html
+	go test ./backends -coverprofile=c.out
+	go tool cover -html=c.out -o=cover/backends.html
