@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"log/syslog"
 	"net"
@@ -19,6 +20,7 @@ type Server struct {
 	Cfg       *Config
 	Backend   backends.Abstract
 	App       *cli.App
+	Logging   bool
 	running   bool
 	listeners []net.Listener
 	tlsConfig *tls.Config
@@ -41,7 +43,7 @@ func NewServer() *Server {
 			Usage: "if the app should run in foreground or not",
 		},
 	}
-	return &Server{App: app, running: true}
+	return &Server{App: app, running: true, Logging: true}
 }
 
 func (s *Server) Run(args []string) {
@@ -118,7 +120,11 @@ func (s *Server) Stop() (err error) {
 func (s *Server) setupLogger() (logger *log.Logger, err error) {
 	flags := log.LstdFlags | log.Lmicroseconds
 	if s.Cfg.Daemon.Foreground {
-		logger = log.New(os.Stdout, "", flags)
+		if s.Logging {
+			logger = log.New(os.Stdout, "", flags)
+		} else {
+			logger = log.New(ioutil.Discard, "", 0)
+		}
 	} else {
 		logger, err = syslog.NewLogger(s.Cfg.Syslog.Severity|s.Cfg.Syslog.Facility, flags)
 	}

@@ -18,6 +18,8 @@ var started bool
 func newClient() (conn *client.Client) {
 	if started == false {
 		serverInstance = server.NewServer()
+		serverInstance.Logging = false
+
 		var configPath string
 		if configPath = os.Getenv("TEST_CONFIG"); configPath == "" {
 			configPath = "config/test_sqlite.conf"
