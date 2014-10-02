@@ -412,6 +412,54 @@ func TestUsersAndGroupsAssociations(t *testing.T) {
 	}
 }
 
+func TestDeleteGroupWithAssociations(t *testing.T) {
+	client := newClient()
+	defer client.Close()
+
+	username := uniqName()
+	client.CreateUser(username, "secret")
+
+	group := uniqName()
+	client.CreateGroup(group)
+	defer client.DeleteGroup(group)
+
+	_, lerr := client.LoginUser(username, "secret")
+	if lerr != nil {
+		t.Fatal("should be able to login", lerr)
+	}
+	client.SetUserData(username, "foo", "bar")
+	client.AddUserToGroup(username, group)
+	derr := client.DeleteUser(username)
+	if derr != nil {
+		t.Fatal("unable to delete the user", derr.Code)
+	}
+	_, lerr1 := client.LoginUser(username, "secret")
+	if lerr1 == nil {
+		t.Fatal("should not be able to login, but was able -> not deleted")
+	}
+}
+
+func TestDeleteUserWithAssociations(t *testing.T) {
+	client := newClient()
+	defer client.Close()
+
+	username := uniqName()
+	client.CreateUser(username, "secret")
+
+	group := uniqName()
+	client.CreateGroup(group)
+
+	_, lerr := client.LoginUser(username, "secret")
+	if lerr != nil {
+		t.Fatal("should be able to login", lerr)
+	}
+	client.AddUserToGroup(username, group)
+	derr := client.DeleteGroup(group)
+	if derr != nil {
+		t.Fatal("unable to delete the group", derr.Code)
+	}
+}
+
 func TestStats(t *testing.T) {
 	client := newClient()
 	defer client.Close()
