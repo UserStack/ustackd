@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/UserStack/ustackd/backends"
 )
@@ -18,11 +17,11 @@ import (
 /* parts of the code are taken from smtp.go from the core library */
 
 type Client struct {
-	mutex sync.Mutex
-	Text  *textproto.Conn
-	conn  net.Conn
+	mutex   sync.Mutex
+	Text    *textproto.Conn
+	conn    net.Conn
 	tlsConn *tls.Conn
-	host  string
+	host    string
 }
 
 // Dial returns a new Client connected to an ustack server at addr.
@@ -58,8 +57,6 @@ func (client *Client) StartTls(config *tls.Config) error {
 		return err
 	}
 	client.tlsConn = tls.Client(client.conn, config)
-	client.tlsConn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-	err = client.tlsConn.Handshake()
 	if err != nil {
 		return err
 	}

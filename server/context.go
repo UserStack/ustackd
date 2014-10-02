@@ -19,11 +19,11 @@ type Context struct {
 
 func NewContext(conn net.Conn, server *Server) *Context {
 	return &Context{
-		conn: conn,
+		conn:   conn,
 		reader: bufio.NewReader(conn),
 		writer: bufio.NewWriter(conn),
 		Server: server,
-		addr: conn.RemoteAddr(),
+		addr:   conn.RemoteAddr(),
 	}
 }
 
@@ -54,6 +54,10 @@ func (context *Context) Err(code string) {
 
 func (context *Context) Log(line string) {
 	context.Logger.Printf("%s: %s\r\n", context.addr, line)
+}
+
+func (context *Context) Logf(format string, args ...interface{}) {
+	context.Log(fmt.Sprintf(format, args...))
 }
 
 func (context *Context) Realm() {
@@ -91,10 +95,17 @@ func (context *Context) Handle() {
 
 func (context *Context) starttls(line string) bool {
 	if line == "starttls" && context.tlsConfig != nil {
-		context.conn = tls.Server(context.conn, context.tlsConfig)
-		context.reader = bufio.NewReader(context.conn)
-		context.writer = bufio.NewWriter(context.conn)
-		context.Log("Changed to tls channel")
+		conn := tls.Server(context.conn, context.tlsConfig)
+		err := conn.Handshake()
+		if err != nil {
+			context.Logf("Faild to change to channel: %v", err)
+			context.Err("EFAULT")
+		} else {
+			context.conn = conn
+			context.reader = bufio.NewReader(conn)
+			context.writer = bufio.NewWriter(conn)
+			context.Log("Changed to tls channel")
+		}
 		return true
 	} else {
 		return false

@@ -1,13 +1,13 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"log/syslog"
 	"net"
 	"os"
 	"os/signal"
-	"crypto/tls"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/client"
@@ -73,7 +73,7 @@ func (s *Server) RunContext(c *cli.Context) {
 		logger.Printf("Unable to demonize: %s\n", err)
 		return
 	}
-	
+
 	if err = s.setupTls(); err != nil {
 		logger.Printf("Can't configure tls: %s\n", err)
 		return
@@ -126,7 +126,7 @@ func (s *Server) setupLogger() (logger *log.Logger, err error) {
 	return
 }
 
-func (s *Server) setupTls() (error) {
+func (s *Server) setupTls() error {
 	if s.Cfg.Ssl.Enabled {
 		cert, err := tls.LoadX509KeyPair(s.Cfg.Ssl.Cert, s.Cfg.Ssl.Key)
 		if err != nil {
