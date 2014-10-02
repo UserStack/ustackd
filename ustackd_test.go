@@ -525,11 +525,10 @@ func BenchmarkCreateUser(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		username := uniqName()
-		b.StartTimer()
 		client.CreateUser(username, "secret")
-		b.StopTimer()
 		defer client.DeleteUser(username)
 	}
+	b.StopTimer()
 }
 
 func BenchmarkDeleteUser(b *testing.B) {
