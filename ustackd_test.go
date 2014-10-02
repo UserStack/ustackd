@@ -309,7 +309,7 @@ func TestDeleteGroup(t *testing.T) {
 	// now has two users
 	groups, _ = client.Groups()
 	if diff := len(groups) - groupCount; diff != 2 {
-		t.Fatal("group count should have been increased by 2, but was increased by %d", diff)
+		t.Fatalf("group count should have been increased by 2, but was increased by %d", diff)
 	}
 
 	// delete one using uid one using name
