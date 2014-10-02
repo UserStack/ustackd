@@ -16,6 +16,9 @@ vet:
 
 test: clean vet sqlite
 
+benchmark: clean
+	go test -bench . -run benchmark -benchmem
+
 sqlite:
 	go test -v ./...
 	

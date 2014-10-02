@@ -14,72 +14,74 @@ type Interpreter struct {
 }
 
 func (ip *Interpreter) parse(line string) {
-	if !(ip.unrestrictedCommands(line) || ip.restrictedCommands(line)) {
-		ip.Err("EFAULT") // command unknown
+	cmd, args := parseCmd(line)
+	switch cmd {
+	case ERR_UNKNOWN_FUNC:
+		ip.Err("EFAULT")
+	case ERR_MISSING_ARGS, ERR_INVALID_ARGS:
+		ip.Err("EINVAL")
+	case CLIENT_AUTH, QUIT:
+		ip.unrestrictedCommands(cmd, args)
+	default:
+		if !ip.authorized(strings.ToLower(line)) {
+			ip.Err("EACCES")
+			ip.Server.Stats.restrictedCommandsAccessDenied++
+			return
+		}
+		ip.restrictedCommands(cmd, args)
 	}
 }
 
-func (ip *Interpreter) unrestrictedCommands(line string) bool {
-	cmd := strings.ToLower(line)
-	if strings.HasPrefix(cmd, "client auth ") {
-		ip.clientAuth(line[12:])
-	} else if cmd == "quit" {
-		ip.quit(line)
-	} else {
-		return false
-	}
+func (ip *Interpreter) unrestrictedCommands(cmd Command, args []string) {
 	ip.Server.Stats.unrestrictedCommands++
-	return true
+	switch cmd {
+	case CLIENT_AUTH:
+		ip.clientAuth(args)
+	case QUIT:
+		ip.quit()
+	}
 }
 
-func (ip *Interpreter) restrictedCommands(line string) bool {
-	if !ip.authorized(line) {
-		ip.Err("EACCES")
-		ip.Server.Stats.restrictedCommandsAccessDenied++
-		return true
-	}
-	cmd := strings.ToLower(line)
-	if strings.HasPrefix(cmd, "login ") {
-		ip.login(line[6:])
-	} else if strings.HasPrefix(cmd, "disable ") {
-		ip.disable(line[8:])
-	} else if strings.HasPrefix(cmd, "enable ") {
-		ip.enable(line[7:])
-	} else if strings.HasPrefix(cmd, "set ") {
-		ip.set(line[4:])
-	} else if strings.HasPrefix(cmd, "get ") {
-		ip.get(line[4:])
-	} else if strings.HasPrefix(cmd, "change password ") {
-		ip.changePassword(line[16:])
-	} else if strings.HasPrefix(cmd, "change name ") {
-		ip.changeName(line[12:])
-	} else if strings.HasPrefix(cmd, "user groups ") {
-		ip.userGroups(line[12:])
-	} else if strings.HasPrefix(cmd, "user ") {
-		ip.user(line[5:])
-	} else if strings.HasPrefix(cmd, "delete user ") {
-		ip.deleteUser(line[12:])
-	} else if strings.HasPrefix(cmd, "users") {
-		ip.users(line[5:])
-	} else if strings.HasPrefix(cmd, "add ") {
-		ip.add(line[4:])
-	} else if strings.HasPrefix(cmd, "remove ") {
-		ip.remove(line[7:])
-	} else if strings.HasPrefix(cmd, "delete group ") {
-		ip.deleteGroup(line[13:])
-	} else if strings.HasPrefix(cmd, "groups") {
-		ip.groups(line[6:])
-	} else if strings.HasPrefix(cmd, "group users ") {
-		ip.groupUsers(line[12:])
-	} else if strings.HasPrefix(cmd, "group ") {
-		ip.group(line[6:])
-	} else if cmd == "stats" {
-		ip.stats(line[5:])
-	} else {
-		return false
-	}
+func (ip *Interpreter) restrictedCommands(cmd Command, args []string) {
 	ip.Server.Stats.restrictedCommands++
-	return true
+	switch cmd {
+	case LOGIN:
+		ip.login(args)
+	case DISABLE:
+		ip.disable(args)
+	case ENABLE:
+		ip.enable(args)
+	case SET:
+		ip.set(args)
+	case GET:
+		ip.get(args)
+	case CHANGE_PASSWORD:
+		ip.changePassword(args)
+	case CHANGE_NAME:
+		ip.changeName(args)
+	case USER_GROUPS:
+		ip.userGroups(args)
+	case USER:
+		ip.user(args)
+	case DELETE_USER:
+		ip.deleteUser(args)
+	case USERS:
+		ip.users()
+	case ADD:
+		ip.add(args)
+	case REMOVE:
+		ip.remove(args)
+	case DELETE_GROUP:
+		ip.deleteGroup(args)
+	case GROUPS:
+		ip.groups()
+	case GROUP_USERS:
+		ip.groupUsers(args)
+	case GROUP:
+		ip.group(args)
+	case STATS:
+		ip.stats()
+	}
 }
 
 func (ip *Interpreter) authorized(line string) bool {
@@ -100,9 +102,9 @@ func (ip *Interpreter) authorized(line string) bool {
 	}
 }
 
-func (ip *Interpreter) clientAuth(passwd string) {
+func (ip *Interpreter) clientAuth(passwd []string) {
 	for _, auth := range ip.Cfg.Client.Auth {
-		if auth.Passwd == passwd {
+		if auth.Passwd == passwd[0] {
 			ip.auth = &auth
 			var err error
 			ip.regexp, err = regexp.Compile(auth.Regex)
@@ -118,7 +120,7 @@ func (ip *Interpreter) clientAuth(passwd string) {
 	ip.Err("EPERM")
 }
 
-func (ip *Interpreter) stats(line string) {
+func (ip *Interpreter) stats() {
 	ip.Writef("Connects: %d", ip.Server.Stats.Connects)
 	ip.Writef("Disconnects: %d", ip.Server.Stats.Disconnects)
 	ip.Writef("Active Connections: %d", ip.Server.Stats.ActiveConnections())
@@ -140,142 +142,112 @@ func (ip *Interpreter) stats(line string) {
 }
 
 // login <name> <password>
-func (ip *Interpreter) login(line string) {
-	ip.withArgs(line, 2, func(args []string) {
-		uid, err := ip.Backend.LoginUser(args[0], args[1])
-		if err == nil {
-			ip.Server.Stats.Login++
-		} else {
-			ip.Server.Stats.FailedLogin++
-		}
-		ip.intResponder(uid, err)
-	})
+func (ip *Interpreter) login(args []string) {
+	uid, err := ip.Backend.LoginUser(args[0], args[1])
+	if err == nil {
+		ip.Server.Stats.Login++
+	} else {
+		ip.Server.Stats.FailedLogin++
+	}
+	ip.intResponder(uid, err)
 }
 
 // disable <name|uid>
-func (ip *Interpreter) disable(nameuid string) {
-	ip.simpleResponder(ip.Backend.DisableUser(nameuid))
+func (ip *Interpreter) disable(args []string) {
+	ip.simpleResponder(ip.Backend.DisableUser(args[0]))
 }
 
 // enable <name|uid>
-func (ip *Interpreter) enable(nameuid string) {
-	ip.simpleResponder(ip.Backend.EnableUser(nameuid))
+func (ip *Interpreter) enable(args []string) {
+	ip.simpleResponder(ip.Backend.EnableUser(args[0]))
 }
 
 // set <name|uid> <key> <value>
-func (ip *Interpreter) set(line string) {
-	ip.withArgs(line, 3, func(args []string) {
-		ip.simpleResponder(
-			ip.Backend.SetUserData(args[0], args[1], args[2]))
-	})
+func (ip *Interpreter) set(args []string) {
+	ip.simpleResponder(ip.Backend.SetUserData(args[0], args[1], args[2]))
 }
 
 // get <name|uid> <key>
-func (ip *Interpreter) get(line string) {
-	ip.withArgs(line, 2, func(args []string) {
-		val, err := ip.Backend.GetUserData(args[0], args[1])
-		if err == nil {
-			ip.Write(val)
-		}
-		ip.simpleResponder(err)
-	})
+func (ip *Interpreter) get(args []string) {
+	val, err := ip.Backend.GetUserData(args[0], args[1])
+	if err == nil {
+		ip.Write(val)
+	}
+	ip.simpleResponder(err)
 }
 
 // change password <name|uid> <password> <newpassword>
-func (ip *Interpreter) changePassword(line string) {
-	ip.withArgs(line, 3, func(args []string) {
-		ip.simpleResponder(
-			ip.Backend.ChangeUserPassword(args[0], args[1], args[2]))
-	})
+func (ip *Interpreter) changePassword(args []string) {
+	ip.simpleResponder(ip.Backend.ChangeUserPassword(args[0], args[1], args[2]))
 }
 
 // change name <name|uid> <password> <newname>
-func (ip *Interpreter) changeName(line string) {
-	ip.withArgs(line, 3, func(args []string) {
-		ip.simpleResponder(
-			ip.Backend.ChangeUserName(args[0], args[1], args[2]))
-	})
+func (ip *Interpreter) changeName(args []string) {
+	ip.simpleResponder(ip.Backend.ChangeUserName(args[0], args[1], args[2]))
 }
 
 // user groups <name|uid>
-func (ip *Interpreter) userGroups(nameuid string) {
-	items, err := ip.Backend.UserGroups(nameuid)
+func (ip *Interpreter) userGroups(args []string) {
+	items, err := ip.Backend.UserGroups(args[0])
 	ip.groupResponder(items, err)
 }
 
 // user <name> <password>
-func (ip *Interpreter) user(line string) {
-	ip.withArgs(line, 2, func(args []string) {
-		uid, err := ip.Backend.CreateUser(args[0], args[1])
-		ip.intResponder(uid, err)
-	})
+func (ip *Interpreter) user(args []string) {
+	uid, err := ip.Backend.CreateUser(args[0], args[1])
+	ip.intResponder(uid, err)
 }
 
 // delete user <name|uid>
-func (ip *Interpreter) deleteUser(nameuid string) {
-	ip.simpleResponder(ip.Backend.DeleteUser(nameuid))
+func (ip *Interpreter) deleteUser(args []string) {
+	ip.simpleResponder(ip.Backend.DeleteUser(args[0]))
 }
 
 // users
-func (ip *Interpreter) users(line string) {
+func (ip *Interpreter) users() {
 	items, err := ip.Backend.Users()
 	ip.userResponder(items, err)
 }
 
 // add <name|uid> to <group|gid>
-func (ip *Interpreter) add(line string) {
-	ip.withArgs(line, 2, func(args []string) {
-		ip.simpleResponder(ip.Backend.AddUserToGroup(args[0], args[1]))
-	})
+func (ip *Interpreter) add(args []string) {
+	ip.simpleResponder(ip.Backend.AddUserToGroup(args[0], args[1]))
 }
 
 // remove <name|uid> from <group|gid>
-func (ip *Interpreter) remove(line string) {
-	ip.withArgs(line, 2, func(args []string) {
-		ip.simpleResponder(ip.Backend.RemoveUserFromGroup(args[0], args[1]))
-	})
+func (ip *Interpreter) remove(args []string) {
+	ip.simpleResponder(ip.Backend.RemoveUserFromGroup(args[0], args[1]))
 }
 
 // delete group <group|gid>
-func (ip *Interpreter) deleteGroup(groupgid string) {
-	ip.simpleResponder(ip.Backend.DeleteGroup(groupgid))
+func (ip *Interpreter) deleteGroup(args []string) {
+	ip.simpleResponder(ip.Backend.DeleteGroup(args[0]))
 }
 
 // groups
-func (ip *Interpreter) groups(line string) {
+func (ip *Interpreter) groups() {
 	items, err := ip.Backend.Groups()
 	ip.groupResponder(items, err)
 }
 
 // group users <group|gid>
-func (ip *Interpreter) groupUsers(groupgid string) {
-	items, err := ip.Backend.GroupUsers(groupgid)
+func (ip *Interpreter) groupUsers(args []string) {
+	items, err := ip.Backend.GroupUsers(args[0])
 	ip.userResponder(items, err)
 }
 
 // group <name>
-func (ip *Interpreter) group(name string) {
-	gid, err := ip.Backend.CreateGroup(name)
+func (ip *Interpreter) group(args []string) {
+	gid, err := ip.Backend.CreateGroup(args[0])
 	ip.intResponder(gid, err)
 }
 
-func (ip *Interpreter) quit(line string) {
+func (ip *Interpreter) quit() {
 	ip.quitting = true
 	ip.Write("+ BYE")
 }
 
 // Helpers
-
-type withArgsFn func([]string)
-
-func (ip *Interpreter) withArgs(line string, n int, fn withArgsFn) {
-	args := strings.SplitN(line, " ", n)
-	if len(args) == n {
-		fn(args)
-	} else {
-		ip.Err("EINVAL")
-	}
-}
 
 func (ip *Interpreter) simpleResponder(err *backends.Error) {
 	if err != nil {

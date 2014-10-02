@@ -18,8 +18,6 @@ var started bool
 func newClient() (conn *client.Client) {
 	if started == false {
 		serverInstance = server.NewServer()
-		serverInstance.Logging = false
-
 		var configPath string
 		if configPath = os.Getenv("TEST_CONFIG"); configPath == "" {
 			configPath = "config/test_sqlite.conf"
@@ -299,7 +297,7 @@ func TestDeleteGroup(t *testing.T) {
 	group1 := uniqName()
 
 	err := client.DeleteUser("")
-	if err.Code != "EFAULT" {
+	if err.Code != "EINVAL" {
 		t.Fatal("should error on missing parameter", err.Code)
 	}
 
@@ -489,7 +487,7 @@ func TestStats(t *testing.T) {
 		"Successfull logins":                   1,
 		"Failed logins":                        2,
 		"Unrestricted Commands":                0,
-		"Restricted Commands":                  4,
+		"Restricted Commands":                  5,
 		"Access denied on Restricted Commands": 0,
 		"Users":  userCount,
 		"Groups": groupCount,
@@ -510,7 +508,7 @@ func TestStats(t *testing.T) {
 		"Successfull logins":                   1,
 		"Failed logins":                        2,
 		"Unrestricted Commands":                1,
-		"Restricted Commands":                  5,
+		"Restricted Commands":                  6,
 		"Access denied on Restricted Commands": 0,
 		"Users":  userCount,
 		"Groups": groupCount,
