@@ -517,3 +517,31 @@ func TestStats(t *testing.T) {
 		t.Fatalf("expected %v to be %v", stats, expected)
 	}
 }
+
+func BenchmarkCreateUser(b *testing.B) {
+	client := newClient()
+	defer client.Close()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		username := uniqName()
+		b.StartTimer()
+		client.CreateUser(username, "secret")
+		b.StopTimer()
+		defer client.DeleteUser(username)
+	}
+}
+
+func BenchmarkDeleteUser(b *testing.B) {
+	client := newClient()
+	defer client.Close()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		username := uniqName()
+		client.CreateUser(username, "secret")
+		b.StartTimer()
+		client.DeleteUser(username)
+		b.StopTimer()
+	}
+}
