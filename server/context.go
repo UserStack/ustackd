@@ -18,10 +18,13 @@ type Context struct {
 }
 
 func NewContext(conn net.Conn, server *Server) *Context {
-	reader := bufio.NewReader(conn)
-	writer := bufio.NewWriter(conn)
-	addr := conn.RemoteAddr()
-	return &Context{conn, reader, writer, server, addr, false}
+	return &Context{
+		conn: conn,
+		reader: bufio.NewReader(conn),
+		writer: bufio.NewWriter(conn),
+		Server: server,
+		addr: conn.RemoteAddr(),
+	}
 }
 
 func (context *Context) Write(line string) {
@@ -87,21 +90,11 @@ func (context *Context) Handle() {
 }
 
 func (context *Context) starttls(line string) bool {
-	if line == "starttls" && context.Cfg.Ssl.Enabled {
-		cert, err := tls.LoadX509KeyPair(context.Cfg.Ssl.Cert,
-			context.Cfg.Ssl.Key)
-		if err != nil {
-			context.Log("Can't start tls session: " + err.Error())
-			context.Err("EFAULT")
-			return true
-		}
-		config := tls.Config{
-			Certificates: []tls.Certificate{cert},
-		}
-		context.conn = tls.Server(context.conn, &config)
+	if line == "starttls" && context.tlsConfig != nil {
+		context.conn = tls.Server(context.conn, context.tlsConfig)
 		context.reader = bufio.NewReader(context.conn)
 		context.writer = bufio.NewWriter(context.conn)
-		context.Log("Secured channel")
+		context.Log("Changed to tls channel")
 		return true
 	} else {
 		return false

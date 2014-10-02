@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"crypto/tls"
 
 	"github.com/UserStack/ustackd/backends"
 	"github.com/UserStack/ustackd/client"
@@ -20,6 +21,7 @@ type Server struct {
 	App       *cli.App
 	running   bool
 	listeners []net.Listener
+	tlsConfig *tls.Config
 	Stats
 }
 
@@ -71,6 +73,11 @@ func (s *Server) RunContext(c *cli.Context) {
 		logger.Printf("Unable to demonize: %s\n", err)
 		return
 	}
+	
+	if err = s.setupTls(); err != nil {
+		logger.Printf("Can't configure tls: %s\n", err)
+		return
+	}
 
 	if err = s.setupBackend(); err != nil {
 		logger.Printf("Setup Backend: %s\n", err)
@@ -117,6 +124,17 @@ func (s *Server) setupLogger() (logger *log.Logger, err error) {
 	}
 	s.Logger = logger
 	return
+}
+
+func (s *Server) setupTls() (error) {
+	if s.Cfg.Ssl.Enabled {
+		cert, err := tls.LoadX509KeyPair(s.Cfg.Ssl.Cert, s.Cfg.Ssl.Key)
+		if err != nil {
+			return err
+		}
+		s.tlsConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
+	}
+	return nil
 }
 
 func (s *Server) setupBackend() (err error) {

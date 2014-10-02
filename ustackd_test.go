@@ -15,12 +15,12 @@ import (
 var serverInstance *server.Server
 var started bool
 
-func newClient() *client.Client {
+func newClient() (conn *client.Client) {
 	if started == false {
 		serverInstance = server.NewServer()
 		var configPath string
 		if configPath = os.Getenv("TEST_CONFIG"); configPath == "" {
-			configPath = "config/test.conf"
+			configPath = "config/test_sqlite.conf"
 		}
 		go (func() {
 			serverInstance.Run([]string{
@@ -28,13 +28,18 @@ func newClient() *client.Client {
 			})
 		})()
 		started = true
-		time.Sleep(1 * time.Second)
 	}
-	client, err := client.Dial("localhost:35786")
-	if err != nil {
-		panic("client was unable to connect to server: " + err.Error())
+	// try to connect 25 times in with 100ms interval until giving up = max 2.5s
+	var err error
+	for i := 0; i < 25; i++ {
+		conn, err = client.Dial("localhost:35786")
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+		} else {
+			return
+		}
 	}
-	return client
+	panic("client was unable to connect to server: " + err.Error())
 }
 
 func uniqName() string {
@@ -54,8 +59,8 @@ func TestConnectTls(t *testing.T) {
 		t.Fatal("unable to establish tls", aerr)
 	}
 	username := uniqName()
-	defer client.DeleteUser(username)
 	id, serr := client.CreateUser(username, "secret")
+	defer client.DeleteUser(username)
 	if id <= 0 {
 		t.Fatal("user not created, expected id bigger than 0 got", id, serr)
 	}
@@ -421,7 +426,7 @@ func TestStats(t *testing.T) {
 	client.LoginUser("foobar", "123456") // twice
 	tempClient := newClient()            // Connects++
 	// since the server and client are not in sync sleep
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	stats, _ := client.Stats()
 	expected := map[string]int64{
@@ -442,7 +447,7 @@ func TestStats(t *testing.T) {
 
 	tempClient.Close() // Disconnects++
 	// since the server and client are not in sync sleep
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 
 	stats, _ = client.Stats()
 	expected = map[string]int64{

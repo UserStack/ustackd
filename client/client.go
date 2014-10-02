@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/UserStack/ustackd/backends"
 )
@@ -20,6 +21,7 @@ type Client struct {
 	mutex sync.Mutex
 	Text  *textproto.Conn
 	conn  net.Conn
+	tlsConn *tls.Conn
 	host  string
 }
 
@@ -55,7 +57,13 @@ func (client *Client) StartTls(config *tls.Config) error {
 	if err != nil {
 		return err
 	}
-	client.conn = tls.Client(client.conn, config)
+	client.tlsConn = tls.Client(client.conn, config)
+	client.tlsConn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+	err = client.tlsConn.Handshake()
+	if err != nil {
+		return err
+	}
+	client.conn = client.tlsConn
 	client.Text = textproto.NewConn(client.conn)
 	return nil
 }
