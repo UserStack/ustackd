@@ -27,3 +27,7 @@ ustackd
 ustackd.db
 ustackd.pid
 tmp
+
+# coverage files
+*.out
+cover/
