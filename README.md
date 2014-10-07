@@ -2,7 +2,7 @@
 
 Project to learn golang.org in the context of user lifecycle management.
 
-![https://travis-ci.org/UserStack/ustackd.svg?branch=master](https://travis-ci.org/UserStack/ustackd)
+[![Build Status](https://travis-ci.org/UserStack/ustackd.svg?branch=master)](https://travis-ci.org/UserStack/ustackd)
 
 ## Description
 
