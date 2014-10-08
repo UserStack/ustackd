@@ -3,6 +3,7 @@ package backends
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -226,6 +227,27 @@ func (backend *SqlBackend) LoginUser(name string, password string) (uid int64, e
 	case serr != nil:
 		err = &Error{"EFAULT", serr.Error()}
 	}
+	if err != nil {
+		backend.IncFailCount(name)
+	}
+
+	return
+}
+
+func (backend *SqlBackend) IncFailCount(nameuid string) (err *Error) {
+	countS, err := backend.GetUserData(nameuid, "failcount")
+	if err != nil {
+		if err.Message == "Key unknown" {
+			err = backend.SetUserData(nameuid, "failcount", "1")
+		}
+		return
+	}
+	count, serr := strconv.Atoi(countS)
+	if serr != nil {
+		err = &Error{"EFAULT", serr.Error()}
+		return
+	}
+	err = backend.SetUserData(nameuid, "failcount", strconv.Itoa(count+1))
 	return
 }
 
