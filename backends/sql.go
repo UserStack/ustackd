@@ -213,24 +213,20 @@ func (backend *SqlBackend) GetUserData(nameuid string, key string) (string, *Err
 	return "", &Error{"ENOENT", "Key unknown"}
 }
 
-func (backend *SqlBackend) LoginUser(name string, password string) (int64, *Error) {
+func (backend *SqlBackend) LoginUser(name string, password string) (uid int64, err *Error) {
 	if name == "" || password == "" {
-		return 0, &Error{"EINVAL", "Username and password can't be blank"}
+		err = &Error{"EINVAL", "Username and password can't be blank"}
+		return
 	}
-	rows, err := backend.loginUserStmt.Query(name, password)
-	defer rows.Close()
-	if err != nil {
-		return 0, &Error{"EFAULT", err.Error()}
+
+	serr := backend.loginUserStmt.QueryRow(name, password).Scan(&uid)
+	switch {
+	case serr == sql.ErrNoRows:
+		err = &Error{"ENOENT", "Username unknown"}
+	case serr != nil:
+		err = &Error{"EFAULT", serr.Error()}
 	}
-	if !rows.Next() {
-		return 0, &Error{"ENOENT", "Name unknown"}
-	}
-	var uid int64
-	serr := rows.Scan(&uid)
-	if serr != nil {
-		return 0, &Error{"EFAULT", serr.Error()}
-	}
-	return uid, nil
+	return
 }
 
 func (backend *SqlBackend) ChangeUserPassword(nameuid string, password string, newpassword string) *Error {
