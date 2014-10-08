@@ -23,10 +23,13 @@ _testmain.go
 *.test
 *.prof
 
+################################################################################
+# ustackd specific part
+
 ustackd
 ustackd.db
 ustackd.pid
-tmp
+tmp/
 
 # coverage files
 *.out
