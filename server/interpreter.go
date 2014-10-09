@@ -2,7 +2,9 @@ package server
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/UserStack/ustackd/backends"
 )
@@ -81,7 +83,10 @@ func (ip *Interpreter) restrictedCommands(cmd Command, args []string) {
 		ip.group(args)
 	case STATS:
 		ip.stats()
+	case LOGINSTATS:
+		ip.loginStats(args)
 	}
+
 }
 
 func (ip *Interpreter) authorized(line string) bool {
@@ -138,6 +143,29 @@ func (ip *Interpreter) stats() {
 	for key, value := range stats {
 		ip.Writef("%s: %d", key, value)
 	}
+	ip.Ok()
+}
+
+func (ip *Interpreter) loginStats(args []string) {
+	lastS, err := ip.Backend.GetUserData(args[0], "lastlogin")
+	if err != nil {
+		ip.Err(err.Code)
+		return
+	}
+	last, serr := strconv.ParseInt(lastS, 10, 0)
+	if serr != nil {
+		ip.Err("NOINT")
+		return
+	}
+
+	ip.Writef("Last successfull login: %s", time.Unix(last, 0))
+
+	countS, err := ip.Backend.GetUserData(args[0], "failcount")
+	if err != nil {
+		ip.Err(err.Code)
+		return
+	}
+	ip.Writef("Failed login attempts: %s", countS)
 	ip.Ok()
 }
 

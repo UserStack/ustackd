@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 const (
@@ -227,7 +228,9 @@ func (backend *SqlBackend) LoginUser(name string, password string) (uid int64, e
 	case serr != nil:
 		err = &Error{"EFAULT", serr.Error()}
 	}
-	if err != nil {
+	if err == nil {
+		backend.SaveLastLogin(name)
+	} else {
 		backend.IncFailCount(name)
 	}
 
@@ -248,6 +251,17 @@ func (backend *SqlBackend) IncFailCount(nameuid string) (err *Error) {
 		return
 	}
 	err = backend.SetUserData(nameuid, "failcount", strconv.Itoa(count+1))
+	return
+}
+
+func (backend *SqlBackend) SaveLastLogin(nameuid string) (err *Error) {
+	lastS, err := backend.GetUserData(nameuid, "currentlogin")
+	if err == nil {
+		backend.SetUserData(nameuid, "lastlogin", lastS)
+	}
+	var current int64
+	current = time.Now().Unix()
+	err = backend.SetUserData(nameuid, "currentlogin", strconv.FormatInt(current, 10))
 	return
 }
 

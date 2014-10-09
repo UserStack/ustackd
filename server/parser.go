@@ -27,6 +27,7 @@ const (
 	GROUP_USERS
 	GROUP
 	STATS
+	LOGINSTATS
 
 	ERR_UNKNOWN_FUNC
 	ERR_MISSING_ARGS
@@ -48,6 +49,8 @@ func parseCmd(line string) (Command, []string) {
 		return parseTwoArgumentCmd(GET, parts)
 	case "stats":
 		return STATS, NOARGS
+	case "loginstats":
+		return parseOneArgumentCmd(LOGINSTATS, parts)
 	case "add":
 		return parseTwoArgumentCmd(ADD, parts)
 	case "remove":
