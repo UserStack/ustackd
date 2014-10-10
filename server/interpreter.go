@@ -57,6 +57,8 @@ func (ip *Interpreter) restrictedCommands(cmd Command, args []string) {
 		ip.set(args)
 	case GET:
 		ip.get(args)
+	case GETKEYS:
+		ip.getKeys(args)
 	case CHANGE_PASSWORD:
 		ip.changePassword(args)
 	case CHANGE_NAME:
@@ -200,6 +202,18 @@ func (ip *Interpreter) get(args []string) {
 	val, err := ip.Backend.GetUserData(args[0], args[1])
 	if err == nil {
 		ip.Write(val)
+	}
+	ip.simpleResponder(err)
+}
+
+// getkeys <name|uid>
+func (ip *Interpreter) getKeys(args []string) {
+	list, err := ip.Backend.GetUserDataKeys(args[0])
+	if err == nil {
+		ip.Write("User has keys:")
+		for _, key := range list {
+			ip.Write(key)
+		}
 	}
 	ip.simpleResponder(err)
 }

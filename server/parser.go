@@ -14,6 +14,7 @@ const (
 	ENABLE
 	SET
 	GET
+	GETKEYS
 	CHANGE_PASSWORD
 	CHANGE_NAME
 	USER_GROUPS
@@ -47,6 +48,8 @@ func parseCmd(line string) (Command, []string) {
 		return parseThreeArgumentCmd(SET, parts)
 	case "get":
 		return parseTwoArgumentCmd(GET, parts)
+	case "getkeys":
+		return parseOneArgumentCmd(GETKEYS, parts)
 	case "stats":
 		return STATS, NOARGS
 	case "loginstats":

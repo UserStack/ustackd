@@ -22,6 +22,7 @@ type SqlBackend struct {
 	uidForNameUidStmt       *sql.Stmt
 	setUserDataStmt         *sql.Stmt
 	getUserDataStmt         *sql.Stmt
+	getUserDataKeysStmt     *sql.Stmt
 	changeUserPasswordStmt  *sql.Stmt
 	changeUserNameStmt      *sql.Stmt
 	userGroupsStmt          *sql.Stmt
@@ -83,6 +84,11 @@ func (backend *SqlBackend) init(prepare []string) error {
 	}
 	backend.getUserDataStmt, err = backend.db.Prepare(`SELECT value FROM UserValues
 		WHERE uid = $1 AND key = $2;`)
+	if err != nil {
+		panic(err)
+	}
+	backend.getUserDataKeysStmt, err = backend.db.Prepare(`SELECT key FROM UserValues
+		WHERE uid = $1;`)
 	if err != nil {
 		panic(err)
 	}
@@ -213,6 +219,33 @@ func (backend *SqlBackend) GetUserData(nameuid string, key string) (string, *Err
 		return value, nil
 	}
 	return "", &Error{"ENOENT", "Key unknown"}
+}
+
+func (backend *SqlBackend) GetUserDataKeys(nameuid string) (keys []string, err *Error) {
+	if nameuid == "" {
+		err = &Error{"EINVAL", "Name/uid can't be blank"}
+		return
+	}
+	uid, err := backend.getUidForNameUid(nameuid)
+	if err != nil {
+		return
+	}
+	rows, gerr := backend.getUserDataKeysStmt.Query(uid)
+	defer rows.Close()
+	if gerr != nil {
+		err = &Error{"EFAULT", gerr.Error()}
+		return
+	}
+	for rows.Next() {
+		var key string
+		serr := rows.Scan(&key)
+		if serr != nil {
+			err = &Error{"EFAULT", serr.Error()}
+			return
+		}
+		keys = append(keys, key)
+	}
+	return
 }
 
 func (backend *SqlBackend) LoginUser(name string, password string) (uid int64, err *Error) {
