@@ -478,4 +478,16 @@ In a separate terminal:
     mysql -u root -e "create database ustackd"
     mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'travis'@'localhost'"
     TEST_CONFIG=config/test_mysql.conf go test -v ./...
+
+## Ideas
+
+ * track ip address of browser at login like `login <name|uid> <pw> <ip>`
+ * show ip addresses and dates of last failed logins
+ * track succesfull logins
+ * plugin system
+   * 2-factor-auth (sms?, otp-token-generator?, frontend: show qr-codes)
+   * e-mail notification
+ * getUserDataKeys returns []string with all keys the userData contains
+ * seperate permission groups from organizational groups (group name prefixes like `perm.` vs. directory structure)
+ * support login with password and token with seperate permissions
     
