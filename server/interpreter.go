@@ -210,7 +210,6 @@ func (ip *Interpreter) get(args []string) {
 func (ip *Interpreter) getKeys(args []string) {
 	list, err := ip.Backend.GetUserDataKeys(args[0])
 	if err == nil {
-		ip.Write("User has keys:")
 		for _, key := range list {
 			ip.Write(key)
 		}
