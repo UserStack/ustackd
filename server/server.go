@@ -50,7 +50,6 @@ func (s *Server) Run(args []string) {
 	s.App.Action = func(c *cli.Context) {
 		s.RunContext(c)
 	}
-	s.Logging = false
 	s.App.Run(args)
 }
 

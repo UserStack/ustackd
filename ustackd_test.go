@@ -23,6 +23,7 @@ func newClient() (conn *client.Client) {
 			configPath = "config/test_sqlite.conf"
 		}
 		go (func() {
+			serverInstance.Logging = false
 			serverInstance.Run([]string{
 				"./ustackd", "-f", "-c", configPath,
 			})
